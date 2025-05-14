@@ -15,7 +15,7 @@ import java.util.List;
  * Alinhado com os campos disponíveis em MotoFilter.
  *
  * ---
- * @author Rafael
+ * @author Rafael e Lucas
  * @since 1.0
  */
 public class MotoSpecification {
