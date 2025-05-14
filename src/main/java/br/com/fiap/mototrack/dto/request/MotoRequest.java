@@ -1,0 +1,72 @@
+package br.com.fiap.mototrack.dto.request;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * 📦 DTO: MotoRequest
+ *
+ * Representa os dados recebidos para criação ou atualização de uma Moto no sistema.
+ * Inclui validações e controle de entrada via Bean Validation.
+ *
+ * ---
+ * @author Rafael
+ * @version 1.0
+ */
+@Data
+@NoArgsConstructor
+public class MotoRequest {
+
+    // 🔑 Identificadores
+
+    /**
+     * Placa da moto. Deve ser única e não vazia.
+     */
+    @NotBlank(message = "A placa é obrigatória.")
+    private String placa;
+
+    /**
+     * Modelo da moto (ex: CG 160).
+     */
+    @NotBlank(message = "O modelo é obrigatório.")
+    private String modelo;
+
+    /**
+     * Marca da moto (ex: Honda).
+     */
+    @NotBlank(message = "A marca é obrigatória.")
+    private String marca;
+
+    /**
+     * Ano de fabricação da moto (mínimo 2000).
+     */
+    @Min(value = 2000, message = "O ano deve ser no mínimo 2000.")
+    private int ano;
+
+    /**
+     * Status atual da moto (ex: Disponível, Locada).
+     */
+    @NotBlank(message = "O status é obrigatório.")
+    private String status;
+
+    // 🔗 Relacionamentos
+
+    /**
+     * Identificador da filial a qual a moto pertence.
+     */
+    private Long filialId;
+
+    // 🌐 Localização GPS
+
+    /**
+     * Latitude atual da moto.
+     */
+    private Double latitude;
+
+    /**
+     * Longitude atual da moto.
+     */
+    private Double longitude;
+}
