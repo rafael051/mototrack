@@ -2,14 +2,14 @@ package br.com.fiap.mototrack.service;
 
 import br.com.fiap.mototrack.dto.request.MotoRequest;
 import br.com.fiap.mototrack.dto.response.MotoResponse;
-import br.com.fiap.mototrack.exception.FilialNotFoundException;
-import br.com.fiap.mototrack.exception.MotoNotFoundException;
 import br.com.fiap.mototrack.filter.MotoFilter;
 import br.com.fiap.mototrack.model.Filial;
 import br.com.fiap.mototrack.model.Moto;
 import br.com.fiap.mototrack.repository.FilialRepository;
 import br.com.fiap.mototrack.repository.MotoRepository;
 import br.com.fiap.mototrack.specification.MotoSpecification;
+import static br.com.fiap.mototrack.exception.HttpExceptionUtils.notFound;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -23,12 +23,13 @@ import java.util.List;
  *
  * Camada de lógica de negócios da entidade `Moto`.
  *
+ * ---
  * ## 📋 Responsabilidades:
- * - Conversão entre `DTO` e `Entity` usando `ModelMapper`
+ * - Conversão entre `DTO` e `Entity` com `ModelMapper`
  * - Validação de entidades relacionadas (como `Filial`)
- * - Aplicação de regras e delegação para o repositório
- * - Utilização de Specifications para consultas dinâmicas
- * - Tratamento de exceções com mensagens claras e centralizadas
+ * - Aplicação de regras de negócio
+ * - Utilização de Specifications para filtros dinâmicos
+ * - Tratamento de exceções personalizadas
  *
  * ---
  * @author Rafael
@@ -47,20 +48,20 @@ public class MotoService {
     private final ModelMapper modelMapper;
 
     // =============================
-    // 📌 Cadastrar nova moto
+    // 📝 Cadastrar nova moto
     // =============================
 
     /**
-     * Cadastra uma nova moto no banco de dados.
-     * Valida o vínculo com filial (se fornecido) e mapeia o DTO para entidade.
+     * Cadastra uma nova moto no sistema.
+     * Valida o vínculo com filial, se informado.
      */
+    @Transactional
     public MotoResponse cadastrar(MotoRequest dto) {
         Moto moto = modelMapper.map(dto, Moto.class);
 
-        // 🔗 Validação do relacionamento com a Filial
         if (dto.getFilialId() != null) {
             Filial filial = filialRepository.findById(dto.getFilialId())
-                    .orElseThrow(FilialNotFoundException::new);
+                    .orElseThrow(() -> notFound("Filial", dto.getFilialId()));
             moto.setFilial(filial);
         }
 
@@ -68,38 +69,44 @@ public class MotoService {
         return modelMapper.map(salva, MotoResponse.class);
     }
 
+
+
+
+
     // =============================
     // ✏️ Atualizar moto existente
     // =============================
 
     /**
      * Atualiza os dados de uma moto com base no ID fornecido.
-     * Lança exceção se a moto ou filial não forem encontradas.
+     * Lança exceções se a moto ou a filial não forem encontradas.
      */
+    @Transactional
     public MotoResponse atualizar(Long id, MotoRequest dto) {
         Moto existente = repository.findById(id)
-                .orElseThrow(MotoNotFoundException::new);
+                .orElseThrow(() -> notFound("Moto", id));
 
         modelMapper.map(dto, existente);
 
         if (dto.getFilialId() != null) {
             Filial filial = filialRepository.findById(dto.getFilialId())
-                    .orElseThrow(FilialNotFoundException::new);
+                    .orElseThrow(() -> notFound("Filial", dto.getFilialId()));
             existente.setFilial(filial);
         } else {
-            existente.setFilial(null); // Limpa vínculo se não informado
+            existente.setFilial(null);
         }
 
         Moto atualizada = repository.save(existente);
         return modelMapper.map(atualizada, MotoResponse.class);
     }
 
+
     // =============================
-    // 📄 Consultar todas
+    // 📄 Consultar todas as motos
     // =============================
 
     /**
-     * Lista todas as motos da base, sem filtros.
+     * Retorna todas as motos cadastradas no sistema.
      */
     public List<MotoResponse> consultarTodos() {
         return repository.findAll().stream()
@@ -108,40 +115,43 @@ public class MotoService {
     }
 
     // =============================
-    // 🔍 Buscar por ID
+    // 🔍 Buscar moto por ID
     // =============================
 
     /**
-     * Retorna os dados de uma moto específica pelo seu ID.
+     * Retorna os dados de uma moto pelo ID.
+     * Lança exceção se não encontrada.
      */
     public MotoResponse buscarPorId(Long id) {
         Moto moto = repository.findById(id)
-                .orElseThrow(MotoNotFoundException::new);
+                .orElseThrow(() -> notFound("Moto", id));
         return modelMapper.map(moto, MotoResponse.class);
     }
+
 
     // =============================
     // ❌ Excluir moto
     // =============================
 
     /**
-     * Exclui uma moto do banco com base no ID informado.
+     * Exclui uma moto com base no ID informado.
      * Lança exceção se a moto não existir.
      */
+    @Transactional
     public void excluir(Long id) {
         if (!repository.existsById(id)) {
-            throw new MotoNotFoundException("Moto não encontrada para exclusão");
+            throw notFound("Moto", id);
         }
         repository.deleteById(id);
     }
 
+
     // =============================
-    // 🔎 Consulta com Filtros
+    // 🔎 Consulta com filtros dinâmicos
     // =============================
 
     /**
-     * Retorna uma página de resultados de motos filtradas dinamicamente
-     * com paginação e ordenação, via Specification.
+     * Retorna uma página de motos com base nos filtros recebidos.
      */
     public Page<MotoResponse> consultarComFiltro(MotoFilter filtro, Pageable pageable) {
         var spec = MotoSpecification.comFiltros(filtro);

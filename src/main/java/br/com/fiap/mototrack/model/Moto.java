@@ -3,6 +3,7 @@ package br.com.fiap.mototrack.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -10,8 +11,7 @@ import java.time.LocalDateTime;
  * 🛵 Entidade: Moto
  *
  * Representa uma motocicleta cadastrada no sistema da Mottu.
- * Armazena dados técnicos da moto, status operacional,
- * vínculo com filial e localização geográfica.
+ * Armazena dados técnicos, status operacional, vínculo com filial e localização.
  *
  * ---
  * @author Rafael
@@ -29,67 +29,68 @@ public class Moto {
     // 🔑 Identificação
     // ===========================
 
-    /** Identificador único da moto (chave primária). */
+    /** ID único da moto */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_moto")
     private Long id;
 
-    /** Placa da moto. Deve ser única e não nula. */
+    /** Placa da moto (única) */
     @NotBlank(message = "A placa é obrigatória.")
-    @Column(name = "placa", unique = true, nullable = false)
+    @Column(name = "cd_placa", unique = true, nullable = false)
     private String placa;
 
     // ===========================
-    // 📋 Especificações Técnicas
+    // 📋 Especificações
     // ===========================
 
-    /** Modelo da moto (ex: CG 160 Fan). */
+    /** Modelo da moto */
     @NotBlank(message = "O modelo é obrigatório.")
-    @Column(name = "modelo")
+    @Column(name = "ds_modelo")
     private String modelo;
 
-    /** Marca da moto (ex: Honda). */
+    /** Marca da moto */
     @NotBlank(message = "A marca é obrigatória.")
-    @Column(name = "marca")
+    @Column(name = "ds_marca")
     private String marca;
 
-    /** Ano de fabricação da moto. Mínimo aceito: 2000. */
+    /** Ano de fabricação */
     @Min(value = 2000, message = "O ano mínimo permitido é 2000.")
-    @Column(name = "ano")
+    @Column(name = "nr_ano")
     private int ano;
 
-    /** Status operacional atual da moto (ex: Disponível, Locada, Manutenção). */
+    /** Status da moto (ex: Disponível, Locada) */
     @NotBlank(message = "O status é obrigatório.")
-    @Column(name = "status")
+    @Column(name = "ds_status")
     private String status;
 
     // ===========================
-    // 🔗 Relacionamentos
+    // 🔗 Relacionamento
     // ===========================
 
-    /** Filial vinculada à moto. */
+    /** Filial associada à moto */
     @ManyToOne
     @JoinColumn(name = "id_filial")
     private Filial filial;
 
     // ===========================
-    // 🌐 Geolocalização
+    // 🌐 Localização
     // ===========================
 
-    /** Latitude atual da moto. */
-    @Column(name = "latitude")
+    /** Latitude atual */
+    @Column(name = "vl_latitude")
     private Double latitude;
 
-    /** Longitude atual da moto. */
-    @Column(name = "longitude")
+    /** Longitude atual */
+    @Column(name = "vl_longitude")
     private Double longitude;
 
     // ===========================
-    // 🕒 Controle de criação
+    // 🕒 Controle
     // ===========================
 
-    /** Data de criação automática da moto no sistema. */
+    /** Data/hora de criação do registro */
+    @CreationTimestamp
     @Column(name = "dt_criacao", updatable = false)
     private LocalDateTime dataCriacao;
 }

@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 
 /**
  * 📁 Repositório JPA para a entidade Evento.
+ *
+ * Permite operações CRUD e suporte a Specifications para consultas dinâmicas com filtros.
  */
 @Repository
 public interface EventoRepository extends JpaRepository<Evento, Long>, JpaSpecificationExecutor<Evento> {

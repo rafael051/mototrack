@@ -6,7 +6,13 @@ import lombok.*;
 
 /**
  * 👤 Entidade: Usuario
- * Representa um usuário com acesso ao sistema e um papel definido.
+ *
+ * Representa um usuário do sistema com credenciais de acesso e perfil funcional.
+ * Pode ter papel de OPERADOR, GESTOR ou ADMINISTRADOR.
+ *
+ * ---
+ * @author Rafael
+ * @version 1.0
  */
 @Entity
 @Data
@@ -16,21 +22,48 @@ import lombok.*;
 @Table(name = "tb_usuario")
 public class Usuario {
 
+    // ===========================
+    // 🔑 Identificação
+    // ===========================
+
+    /**
+     * Identificador único do usuário.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id_usuario")
     private Long id;
 
-    @NotBlank
+    // ===========================
+    // 🧑 Dados pessoais
+    // ===========================
+
+    /**
+     * Nome completo do usuário.
+     */
+    @NotBlank(message = "O nome é obrigatório.")
+    @Column(name = "nm_usuario", nullable = false)
     private String nome;
 
-    @Email
-    @NotBlank
-    @Column(unique = true)
+    /**
+     * Email do usuário, usado para login. Deve ser único.
+     */
+    @Email(message = "Email inválido.")
+    @NotBlank(message = "O email é obrigatório.")
+    @Column(name = "ds_email", nullable = false, unique = true)
     private String email;
 
-    @NotBlank
+    /**
+     * Senha de acesso ao sistema. Deve ser armazenada criptografada.
+     */
+    @NotBlank(message = "A senha é obrigatória.")
+    @Column(name = "ds_senha", nullable = false)
     private String senha;
 
-    @NotBlank
-    private String perfil; // OPERADOR, GESTOR, ADMINISTRADOR
+    /**
+     * Perfil do usuário (ex: OPERADOR, GESTOR, ADMINISTRADOR).
+     */
+    @NotBlank(message = "O perfil é obrigatório.")
+    @Column(name = "tp_perfil", nullable = false)
+    private String perfil;
 }
