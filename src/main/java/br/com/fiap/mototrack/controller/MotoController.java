@@ -10,12 +10,20 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * ## 🛵 Controller: MotoController
@@ -23,81 +31,93 @@ import org.springframework.web.bind.annotation.*;
  * Controlador responsável pelos endpoints REST da entidade Moto.
  * Permite cadastrar, listar, buscar, atualizar, deletar e filtrar registros de motocicletas.
  */
+@Validated
 @SecurityRequirement(name = "bearerAuth")
-@Tag(name = "Moto", description = "Endpoints para controle de motocicletas nos pátios da Mottu")
-@CrossOrigin(origins = "*")
+@Tag(name = "Moto", description = "Endpoints relacionados ao controle de motocicletas da Mottu")
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/motos")
 @RequiredArgsConstructor
 public class MotoController {
 
+    private static final Logger log = LoggerFactory.getLogger(MotoController.class);
     private final MotoService service;
 
     /**
-     * ### POST /motos
-     * Cadastra uma nova moto.
+     * ### 🛵 POST /motos
+     * Cadastra uma nova moto no sistema.
      */
     @PostMapping
     @CacheEvict(value = "motos", allEntries = true)
     @Operation(summary = "Cadastrar nova moto", description = "Registra uma nova moto no sistema da Mottu.")
     public ResponseEntity<MotoResponse> cadastrar(@RequestBody @Valid MotoRequest dto) {
+        log.info("🛵 Cadastrando moto: {}", dto);
         return ResponseEntity.ok(service.cadastrar(dto));
     }
 
     /**
-     * ### GET /motos
-     * Lista todas as motos com filtros opcionais, paginação e ordenação.
+     * ### 📄 GET /motos
+     * Lista todas as motos cadastradas.
      */
-    @GetMapping("/filtro")
+    @GetMapping
     @Cacheable("motos")
-    @Operation(summary = "Filtrar e listar motos", description = "Filtra motos com base nos parâmetros fornecidos e suporta paginação e ordenação.")
-    public ResponseEntity<Page<MotoResponse>> listarComFiltro(
-            @ParameterObject @ModelAttribute MotoFilter filtro,
-            @RequestParam(defaultValue = "0") int offset,
-            @RequestParam(defaultValue = "20") int limit,
-            @Parameter(description = "Campo de ordenação no formato: campo,direção (ex: placa,desc)",
-                    example = "placa,desc")
-            @RequestParam(defaultValue = "placa,desc") String sort
-    ) {
-        String[] sortParams = sort.split(",");
-        String sortField = sortParams[0];
-        Sort.Direction direction = (sortParams.length > 1 && sortParams[1].equalsIgnoreCase("asc"))
-                ? Sort.Direction.ASC : Sort.Direction.DESC;
-
-        Pageable pageable = PageRequest.of(offset, limit, Sort.by(direction, sortField));
-        return ResponseEntity.ok(service.consultarComFiltro(filtro, pageable));
+    @Operation(summary = "Listar todas as motos", description = "Retorna todas as motocicletas cadastradas no sistema.")
+    public List<MotoResponse> listarTodas() {
+        log.info("📄 Listando todas as motos.");
+        return service.consultarTodos();
     }
 
     /**
-     * ### GET /motos/{id}
-     * Busca uma moto específica pelo ID.
+     * ### 🔍 GET /motos/{id}
+     * Retorna os dados de uma moto específica por ID.
      */
     @GetMapping("/{id}")
     @Operation(summary = "Buscar moto por ID", description = "Retorna os dados da moto correspondente ao ID informado.")
     public ResponseEntity<MotoResponse> buscarPorId(@PathVariable Long id) {
+        log.info("🔍 Buscando moto ID: {}", id);
         return ResponseEntity.ok(service.buscarPorId(id));
     }
 
     /**
-     * ### PUT /motos/{id}
-     * Atualiza uma moto existente pelo ID.
+     * ### ✏️ PUT /motos/{id}
+     * Atualiza os dados de uma moto específica.
      */
     @PutMapping("/{id}")
     @CacheEvict(value = "motos", allEntries = true)
-    @Operation(summary = "Atualizar moto", description = "Atualiza os dados de uma moto existente no sistema.")
+    @Operation(summary = "Atualizar moto", description = "Atualiza os dados de uma motocicleta existente no sistema.")
     public ResponseEntity<MotoResponse> atualizar(@PathVariable Long id, @RequestBody @Valid MotoRequest dto) {
+        log.info("✏️ Atualizando moto ID: {}", id);
         return ResponseEntity.ok(service.atualizar(id, dto));
     }
 
     /**
-     * ### DELETE /motos/{id}
+     * ### 🗑️ DELETE /motos/{id}
      * Remove uma moto do sistema.
      */
     @DeleteMapping("/{id}")
     @CacheEvict(value = "motos", allEntries = true)
-    @Operation(summary = "Excluir moto", description = "Remove uma moto do sistema com base no ID fornecido.")
+    @Operation(summary = "Excluir moto", description = "Remove uma motocicleta do sistema com base no ID informado.")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        log.info("🗑️ Excluindo moto ID: {}", id);
         service.excluir(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * ### 🔍 GET /motos/filtro
+     * Permite realizar buscas com filtros dinâmicos, paginação e ordenação.
+     */
+    @GetMapping("/filtro")
+    @Operation(summary = "Filtrar motos com paginação e ordenação",
+            description = "Permite aplicar filtros nos dados das motos com suporte a paginação e ordenação por query params.")
+    public ResponseEntity<Page<MotoResponse>> filtrarComPaginacao(
+            @ParameterObject @ModelAttribute MotoFilter filtro,
+
+            @ParameterObject
+            @PageableDefault(size = 20, sort = "placa", direction = Sort.Direction.ASC)
+            Pageable pageable
+    ) {
+        log.info("🗃️ Filtros aplicados: {}", filtro);
+        return ResponseEntity.ok(service.consultarComFiltro(filtro, pageable));
     }
 }

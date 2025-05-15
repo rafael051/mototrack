@@ -1,4 +1,4 @@
-package br.com.fiap.mototrack.mapper.config;
+package br.com.fiap.mototrack.mapper;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
