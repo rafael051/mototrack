@@ -24,11 +24,11 @@ import java.time.LocalDateTime;
 public class EventoResponse {
 
     /** Identificador único do evento */
-    @Schema(example = "100", description = "ID do evento registrado")
+    @Schema(example = "1", description = "ID do evento registrado")
     private Long id;
 
     /** ID da moto associada ao evento */
-    @Schema(example = "7", description = "ID da moto vinculada ao evento")
+    @Schema(example = "1", description = "ID da moto vinculada ao evento")
     private Long motoId;
 
     /** Tipo do evento (ex: Saída, Entrada, Manutenção) */
@@ -40,7 +40,10 @@ public class EventoResponse {
     private String motivo;
 
     /** Data e hora do evento no formato brasileiro */
-    @Schema(example = "25/05/2025 15:45", description = "Data e hora do evento (formato: dd/MM/yyyy HH:mm)")
+    @Schema(
+            example = "25/05/2025 15:45",
+            description = "Data e hora do evento (formato: dd/MM/yyyy HH:mm)"
+    )
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime dataHora;
 

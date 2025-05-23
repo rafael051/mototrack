@@ -29,7 +29,7 @@ public class EventoRequest {
     /**
      * ID da moto envolvida no evento.
      */
-    @Schema(example = "12", description = "ID da moto que sofreu o evento")
+    @Schema(example = "1", description = "ID da moto que sofreu o evento")
     @NotNull(message = "O ID da moto é obrigatório.")
     private Long motoId;
 
@@ -58,8 +58,12 @@ public class EventoRequest {
     /**
      * Data e hora do evento no formato brasileiro.
      */
-    @Schema(example = "25/05/2025 14:30", description = "Data e hora do evento (formato: dd/MM/yyyy HH:mm)")
-    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
+    @Schema(
+            example = "01/06/2025 14:00:00",
+            description = "Data e hora do agendamento no formato dd/MM/yyyy HH:mm:ss (não pode ser passada)"
+    )
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
+    @FutureOrPresent(message = "A data agendada não pode estar no passado.")
     private LocalDateTime dataHora;
 
     /**

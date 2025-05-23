@@ -66,4 +66,17 @@ public class Usuario {
     @NotBlank(message = "O perfil é obrigatório.")
     @Column(name = "tp_perfil", nullable = false)
     private String perfil;
+
+    // ===========================
+    // 🔗 Relacionamento
+    // ===========================
+
+    /**
+     * Filial vinculada ao usuário.
+     * Representa a FK ID_FILIAL no banco.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_filial") // nome exato da coluna FK
+    private Filial filial;
+
 }

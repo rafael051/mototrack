@@ -32,9 +32,13 @@ public class AgendamentoResponse {
     private Long motoId;
 
     /** Data e hora do agendamento no formato brasileiro */
-    @Schema(example = "25/05/2025 14:00", description = "Data e hora agendada (formato: dd/MM/yyyy HH:mm)")
+    @Schema(
+            example = "25/05/2025 14:00",
+            description = "Data e hora agendada (formato: dd/MM/yyyy HH:mm)"
+    )
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime dataAgendada;
+
 
     /** Descrição do motivo do agendamento */
     @Schema(example = "Manutenção preventiva programada", description = "Descrição do agendamento")

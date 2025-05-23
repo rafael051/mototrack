@@ -18,6 +18,7 @@ import java.util.List;
  * ## ✅ Filtros Suportados
  *
  * - 🔑 Identificador: `id`
+ * - 🔗 Filial vinculada: `filialId`
  * - 🧑 Dados pessoais: `nome`, `email`, `perfil`
  *
  * Todos os filtros são opcionais e combináveis entre si.
@@ -38,31 +39,24 @@ public class UsuarioSpecification {
         return (root, query, cb) -> {
             List<Predicate> p = new ArrayList<>();
 
-            /**
-             * ### 🔍 Filtro por ID do usuário (igualdade exata)
-             */
+            // 🔍 Filtro por ID do usuário (igualdade exata)
             eq(p, cb, root.get("id"), f.id());
 
-            /**
-             * ### 🧑 Filtro por Nome (busca parcial, case-insensitive)
-             */
+            // 🔗 Filtro por ID da filial (relacionamento ManyToOne)
+            if (f.filialId() != null) {
+                p.add(cb.equal(root.get("filial").get("id"), f.filialId()));
+            }
+
+            // 🧑 Filtro por Nome (busca parcial, case-insensitive)
             like(p, cb, root.get("nome"), f.nome());
 
-            /**
-             * ### 📧 Filtro por E-mail (busca parcial, case-insensitive)
-             * Permite buscar por fragmentos de e-mail.
-             */
+            // 📧 Filtro por E-mail (busca parcial, case-insensitive)
             like(p, cb, root.get("email"), f.email());
 
-            /**
-             * ### 🔐 Filtro por Perfil (igualdade ignorando maiúsculas/minúsculas)
-             * Exemplo de perfis: `ADMINISTRADOR`, `GESTOR`, `OPERADOR`
-             */
+            // 🔐 Filtro por Perfil (igualdade ignorando maiúsculas/minúsculas)
             eqIgnoreCase(p, cb, root.get("perfil"), f.perfil());
 
-            /**
-             * ### 🔄 Combinação de todos os critérios com AND
-             */
+            // 🔄 Combinação de todos os critérios com AND
             return cb.and(p.toArray(new Predicate[0]));
         };
     }

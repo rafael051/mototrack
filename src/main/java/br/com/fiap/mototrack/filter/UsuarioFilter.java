@@ -17,6 +17,9 @@ public record UsuarioFilter(
         /** ID do usuário */
         Long id,
 
+        /** ID da filial à qual o usuário está vinculado */
+
+        Long filialId,
         // 🧑 Dados pessoais
 
         /** Nome do usuário */

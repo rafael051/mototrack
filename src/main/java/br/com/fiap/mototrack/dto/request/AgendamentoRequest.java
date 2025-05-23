@@ -1,5 +1,6 @@
 package br.com.fiap.mototrack.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
@@ -29,7 +30,7 @@ public class AgendamentoRequest {
     /**
      * ID da moto a ser agendada.
      */
-    @Schema(example = "10", description = "ID da moto a ser agendada")
+    @Schema(example = "1", description = "ID da moto a ser agendada")
     @NotNull(message = "O ID da moto é obrigatório.")
     private Long motoId;
 
@@ -41,7 +42,11 @@ public class AgendamentoRequest {
      * Data e hora do agendamento.
      * Deve ser no presente ou futuro.
      */
-    @Schema(example = "2025-06-01T14:00:00", description = "Data e hora do agendamento (não pode ser passada)")
+    @Schema(
+            example = "01/06/2025 14:00:00",
+            description = "Data e hora do agendamento no formato dd/MM/yyyy HH:mm:ss (não pode ser passada)"
+    )
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
     @FutureOrPresent(message = "A data agendada não pode estar no passado.")
     private LocalDateTime dataAgendada;
 

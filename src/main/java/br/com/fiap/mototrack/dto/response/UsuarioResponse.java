@@ -35,4 +35,10 @@ public class UsuarioResponse {
     /** Perfil do usuário (ex: ADMIN, USER) */
     @Schema(example = "ADMIN", description = "Perfil de acesso do usuário")
     private String perfil;
+    
+    /**
+     * ID da filial à qual o usuário está vinculado (pode ser null).
+     */
+    @Schema(example = "10", description = "ID da filial vinculada ao usuário, se houver")
+    private Long filialId;
 }

@@ -3,7 +3,9 @@ package br.com.fiap.mototrack.service;
 import br.com.fiap.mototrack.dto.request.UsuarioRequest;
 import br.com.fiap.mototrack.dto.response.UsuarioResponse;
 import br.com.fiap.mototrack.filter.UsuarioFilter;
+import br.com.fiap.mototrack.model.Filial;
 import br.com.fiap.mototrack.model.Usuario;
+import br.com.fiap.mototrack.repository.FilialRepository;
 import br.com.fiap.mototrack.repository.UsuarioRepository;
 import br.com.fiap.mototrack.specification.UsuarioSpecification;
 import static br.com.fiap.mototrack.exception.HttpExceptionUtils.notFound;
@@ -26,6 +28,7 @@ import java.util.List;
  * ## 📋 Responsabilidades:
  * - Cadastro, edição e exclusão de usuários do sistema
  * - Conversão entre DTOs e entidades com ModelMapper
+ * - Validação e vinculação da filial ao usuário
  * - Consultas dinâmicas com Specification
  * - Tratamento de exceções centralizadas e amigáveis
  *
@@ -42,6 +45,7 @@ public class UsuarioService {
     // =============================
 
     private final UsuarioRepository repository;
+    private final FilialRepository filialRepository;
     private final ModelMapper modelMapper;
 
     // =============================
@@ -50,12 +54,29 @@ public class UsuarioService {
 
     /**
      * Cadastra um novo usuário no sistema.
+     * Faz o vínculo com a filial se o campo filialId for informado.
      */
     @Transactional
     public UsuarioResponse cadastrar(UsuarioRequest dto) {
         Usuario usuario = modelMapper.map(dto, Usuario.class);
+
+        // Se foi informado o ID da filial, vincula ao usuário
+        if (dto.getFilialId() != null) {
+            Filial filial = filialRepository.findById(dto.getFilialId())
+                    .orElseThrow(() -> notFound("Filial", dto.getFilialId()));
+            usuario.setFilial(filial);
+        } else {
+            usuario.setFilial(null);
+        }
+
         Usuario salvo = repository.save(usuario);
-        return modelMapper.map(salvo, UsuarioResponse.class);
+
+        // Prepara o response já incluindo o filialId, se houver
+        UsuarioResponse response = modelMapper.map(salvo, UsuarioResponse.class);
+        if (salvo.getFilial() != null) {
+            response.setFilialId(salvo.getFilial().getId());
+        }
+        return response;
     }
 
     // =============================
@@ -65,6 +86,7 @@ public class UsuarioService {
     /**
      * Atualiza os dados de um usuário existente.
      * Lança exceção se não encontrado.
+     * Atualiza o vínculo com filial, se informado.
      */
     @Transactional
     public UsuarioResponse atualizar(Long id, UsuarioRequest dto) {
@@ -72,8 +94,22 @@ public class UsuarioService {
                 .orElseThrow(() -> notFound("Usuario", id));
 
         modelMapper.map(dto, existente);
+
+        if (dto.getFilialId() != null) {
+            Filial filial = filialRepository.findById(dto.getFilialId())
+                    .orElseThrow(() -> notFound("Filial", dto.getFilialId()));
+            existente.setFilial(filial);
+        } else {
+            existente.setFilial(null);
+        }
+
         Usuario atualizado = repository.save(existente);
-        return modelMapper.map(atualizado, UsuarioResponse.class);
+
+        UsuarioResponse response = modelMapper.map(atualizado, UsuarioResponse.class);
+        if (atualizado.getFilial() != null) {
+            response.setFilialId(atualizado.getFilial().getId());
+        }
+        return response;
     }
 
     // =============================
@@ -82,10 +118,17 @@ public class UsuarioService {
 
     /**
      * Retorna todos os usuários cadastrados no sistema.
+     * Inclui o ID da filial associada, se houver.
      */
     public List<UsuarioResponse> consultarTodos() {
         return repository.findAll().stream()
-                .map(u -> modelMapper.map(u, UsuarioResponse.class))
+                .map(u -> {
+                    UsuarioResponse resp = modelMapper.map(u, UsuarioResponse.class);
+                    if (u.getFilial() != null) {
+                        resp.setFilialId(u.getFilial().getId());
+                    }
+                    return resp;
+                })
                 .toList();
     }
 
@@ -100,7 +143,11 @@ public class UsuarioService {
     public UsuarioResponse buscarPorId(Long id) {
         Usuario usuario = repository.findById(id)
                 .orElseThrow(() -> notFound("Usuario", id));
-        return modelMapper.map(usuario, UsuarioResponse.class);
+        UsuarioResponse response = modelMapper.map(usuario, UsuarioResponse.class);
+        if (usuario.getFilial() != null) {
+            response.setFilialId(usuario.getFilial().getId());
+        }
+        return response;
     }
 
     // =============================
@@ -129,6 +176,12 @@ public class UsuarioService {
     public Page<UsuarioResponse> consultarComFiltro(UsuarioFilter filtro, Pageable pageable) {
         var spec = UsuarioSpecification.comFiltros(filtro);
         return repository.findAll(spec, pageable)
-                .map(u -> modelMapper.map(u, UsuarioResponse.class));
+                .map(u -> {
+                    UsuarioResponse resp = modelMapper.map(u, UsuarioResponse.class);
+                    if (u.getFilial() != null) {
+                        resp.setFilialId(u.getFilial().getId());
+                    }
+                    return resp;
+                });
     }
 }

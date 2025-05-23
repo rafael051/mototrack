@@ -51,4 +51,15 @@ public class UsuarioRequest {
     @Schema(example = "ADMIN", description = "Perfil do usuário no sistema (ex: ADMIN, USUARIO)")
     @NotBlank(message = "O perfil é obrigatório.")
     private String perfil;
+
+    // ===========================
+    // 🔗 Relacionamento
+    // ===========================
+
+    /**
+     * Código da filial vinculada ao usuário.
+     * Opcional: se não informado, usuário não estará vinculado a nenhuma filial.
+     */
+    @Schema(example = "1", description = "ID da filial à qual o usuário pertence")
+    private Long filialId;
 }
