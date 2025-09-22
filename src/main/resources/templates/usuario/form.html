@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="${#strings.isEmpty(id) ? 'MotoTrack • Novo Usuário' : 'MotoTrack • Editar Usuário'}">MotoTrack • Usuário</title>
+
+    <style>
+        :root{
+            --bg:#0f172a;--panel:#111827;--muted:#94a3b8;--text:#e5e7eb;--ring:#2a3344;--primary:#22c55e;--info:#38bdf8;--warn:#f59e0b;--danger:#ef4444
+        }
+        *{box-sizing:border-box}
+        body{margin:0;background:linear-gradient(120deg,#0b1224,#0f172a);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:var(--text)}
+        .wrap{max-width:1120px;margin:5vh auto;padding:24px}
+        header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+        .brand{display:flex;align-items:center;gap:12px}
+        .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a)}
+        h1{font-size:1.4rem;margin:0}
+        .muted{color:var(--muted);font-size:.95rem}
+        .card{background:rgba(17,24,39,.78);backdrop-filter:blur(6px);border:1px solid var(--ring);border-radius:16px;padding:18px}
+        .card h2{margin:0 0 10px;font-size:1.25rem}
+        .row{display:flex;gap:10px;flex-wrap:wrap}
+        a.btn,button.btn{display:inline-block;border:0;border-radius:10px;padding:10px 14px;font-weight:600;text-decoration:none;cursor:pointer}
+        a.primary,button.primary{background:var(--primary);color:#0b1224}
+        a.info{background:var(--info);color:#06121f}
+        a.warn{background:var(--warn);color:#1a1209}
+        a.ghost,button.ghost{background:#0b1224;color:var(--text);border:1px solid var(--ring)}
+        footer{margin-top:28px;color:var(--muted);font-size:.9rem}
+
+        /* ===== Form styles ===== */
+        form{display:grid;gap:14px}
+        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+        label{display:block;margin:0 0 6px;color:var(--muted);font-weight:600}
+        input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--ring);background:#0b1224;color:var(--text);outline:none}
+        input:focus,select:focus{border-color:var(--info);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
+        .field{padding:10px;background:rgba(6,12,24,.45);border:1px dashed var(--ring);border-radius:12px}
+        .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+        .alert{border-radius:12px;padding:12px 14px;margin-bottom:10px;border:1px solid}
+        .alert.error{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.5);color:#fecaca}
+        .err{color:#fecaca;font-size:.9rem;margin-top:6px}
+        small.hint{color:var(--muted);font-size:.85rem}
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <!-- ===== Cabeçalho ===== -->
+    <header aria-label="Cabeçalho do sistema">
+        <div class="brand">
+            <div class="logo" aria-hidden="true"></div>
+            <div>
+                <h1>MotoTrack</h1>
+                <div class="muted" sec:authorize="isAuthenticated()">
+                    Olá, <strong sec:authentication="name">usuário</strong> — perfis: <span sec:authentication="authorities">ROLE_USER</span>
+                </div>
+                <div class="muted" sec:authorize="!isAuthenticated()">Você não está autenticado.</div>
+            </div>
+        </div>
+
+        <!-- Ações de sessão -->
+        <nav aria-label="Sessão">
+            <a class="btn ghost" th:href="@{/login}" sec:authorize="!isAuthenticated()">Entrar</a>
+            <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()" style="display:inline">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button class="btn ghost" type="submit">Sair</button>
+            </form>
+        </nav>
+    </header>
+
+    <!-- ===== Conteúdo: Form Usuário ===== -->
+    <main aria-label="Formulário de Usuário" style="margin-top:20px">
+        <section class="card" aria-labelledby="form-title">
+            <h2 id="form-title" th:text="${#strings.isEmpty(id) ? '👤 Novo Usuário' : '✏️ Editar Usuário'}">👤 Novo Usuário</h2>
+            <p class="muted" th:if="${#strings.isEmpty(id)}">Preencha os dados abaixo para criar um novo usuário.</p>
+            <p class="muted" th:if="${!#strings.isEmpty(id)}">Atualize apenas os campos necessários. A senha só é exibida na criação.</p>
+
+            <!-- ⚠️ Alerta de erros globais -->
+            <div class="alert error" th:if="${#fields.hasErrors('*')}">
+                <strong>Erros de validação:</strong>
+                <ul style="margin:8px 0 0 18px">
+                    <li th:each="e : ${#fields.errors('*')}" th:text="${e}"></li>
+                </ul>
+            </div>
+
+            <!-- 📝 Form principal -->
+            <form th:action="${#strings.isEmpty(id) ? @{/usuarios} : @{|/usuarios/${id}|}}"
+                  method="post" th:object="${usuario}" aria-describedby="form-title">
+
+                <div class="form-grid">
+                    <!-- Nome -->
+                    <div class="field">
+                        <label for="nome">Nome</label>
+                        <input id="nome" type="text" th:field="*{nome}" placeholder="Nome completo" autocomplete="name" required />
+                        <div class="err" th:errors="*{nome}" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Email (login) -->
+                    <div class="field">
+                        <label for="email">Email (login)</label>
+                        <input id="email" type="email" th:field="*{email}" placeholder="email@dominio.com" autocomplete="username" required />
+                        <div class="err" th:errors="*{email}" aria-live="polite"></div>
+                    </div>
+
+                    <!-- CPF -->
+                    <div class="field">
+                        <label for="cpf">CPF</label>
+                        <input id="cpf" type="text" th:field="*{cpf}" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" />
+                        <small class="hint">Aceita formatado ou somente números.</small>
+                        <div class="err" th:errors="*{cpf}" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Perfil -->
+                    <div class="field">
+                        <label for="perfil">Perfil</label>
+                        <select id="perfil" th:field="*{perfil}">
+                            <option value="USER">USER</option>
+                            <option value="ADMIN">ADMIN</option>
+                        </select>
+                        <div class="err" th:errors="*{perfil}" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Senha (somente criação) -->
+                    <div class="field" th:if="${#strings.isEmpty(id)}">
+                        <label for="senha">Senha</label>
+                        <input id="senha" type="password" th:field="*{senha}" minlength="6" placeholder="mín. 6 caracteres" autocomplete="new-password" />
+                        <div class="err" th:errors="*{senha}" aria-live="polite"></div>
+                    </div>
+                </div>
+
+                <!-- ✅ CSRF -->
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <!-- 🔄 PUT para edição -->
+                <input type="hidden" name="_method" th:value="${#strings.isEmpty(id) ? 'post' : 'put'}" />
+
+                <div class="actions">
+                    <button type="submit" class="btn primary" th:text="${#strings.isEmpty(id) ? 'Salvar Usuário' : 'Atualizar Usuário'}">Salvar Usuário</button>
+                    <a class="btn ghost" th:href="@{/usuarios}">Voltar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <!-- ===== Rodapé ===== -->
+    <footer>
+        <span>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> MotoTrack</span> •
+        <span>Segurança: form login + roles (USER/ADMIN)</span>
+    </footer>
+</div>
+</body>
+</html>

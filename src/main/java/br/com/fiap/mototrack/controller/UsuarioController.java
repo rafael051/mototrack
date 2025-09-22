@@ -5,7 +5,6 @@ import br.com.fiap.mototrack.dto.response.UsuarioResponse;
 import br.com.fiap.mototrack.filter.UsuarioFilter;
 import br.com.fiap.mototrack.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // ✅ proteção por perfil (Sprint 3)
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +28,10 @@ import java.util.List;
  *
  * Controlador responsável pelos endpoints REST da entidade Usuario.
  * Permite cadastrar, listar, buscar, atualizar, deletar e filtrar registros de usuários do sistema.
+ *
+ * ✅ Adequações Sprint 3:
+ * - Proteção de rotas com base em perfil via @PreAuthorize (USER/ADMIN).
+ *   * Se preferir, as mesmas regras podem (também) ser aplicadas por URL em SecurityConfig.
  */
 @Validated
 @SecurityRequirement(name = "bearerAuth")
@@ -44,7 +48,9 @@ public class UsuarioController {
     /**
      * ### 👤 POST /usuarios
      * Cadastra um novo usuário no sistema.
+     * 🔒 Requer perfil ADMIN.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @Operation(summary = "Cadastrar novo usuário", description = "Registra um novo usuário no sistema da Mottu.")
     public ResponseEntity<UsuarioResponse> cadastrar(@RequestBody @Valid UsuarioRequest dto) {
@@ -55,7 +61,9 @@ public class UsuarioController {
     /**
      * ### 📄 GET /usuarios
      * Lista todos os usuários cadastrados.
+     * 🔒 Requer USER ou ADMIN.
      */
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping
     @Operation(summary = "Listar todos os usuários", description = "Retorna todos os usuários cadastrados no sistema.")
     public List<UsuarioResponse> listarTodos() {
@@ -66,7 +74,9 @@ public class UsuarioController {
     /**
      * ### 🔍 GET /usuarios/{id}
      * Retorna os dados de um usuário específico por ID.
+     * 🔒 Requer USER ou ADMIN.
      */
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping("/{id}")
     @Operation(summary = "Buscar usuário por ID", description = "Retorna os dados do usuário correspondente ao ID informado.")
     public ResponseEntity<UsuarioResponse> buscarPorId(@PathVariable Long id) {
@@ -77,7 +87,9 @@ public class UsuarioController {
     /**
      * ### ✏️ PUT /usuarios/{id}
      * Atualiza os dados de um usuário específico.
+     * 🔒 Requer perfil ADMIN.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     @Operation(summary = "Atualizar usuário", description = "Atualiza os dados de um usuário existente no sistema.")
     public ResponseEntity<UsuarioResponse> atualizar(@PathVariable Long id, @RequestBody @Valid UsuarioRequest dto) {
@@ -88,7 +100,9 @@ public class UsuarioController {
     /**
      * ### 🗑️ DELETE /usuarios/{id}
      * Remove um usuário do sistema.
+     * 🔒 Requer perfil ADMIN.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir usuário", description = "Remove um usuário do sistema com base no ID informado.")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {
@@ -100,15 +114,16 @@ public class UsuarioController {
     /**
      * ### 🔍 GET /usuarios/filtro
      * Permite realizar buscas com filtros dinâmicos, paginação e ordenação.
+     * 🔒 Requer USER ou ADMIN.
      */
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping("/filtro")
     @Operation(summary = "Filtrar usuários com paginação e ordenação",
             description = "Permite aplicar filtros nos dados dos usuários com suporte a paginação e ordenação por query params.")
     public ResponseEntity<Page<UsuarioResponse>> filtrarComPaginacao(
             @ParameterObject @ModelAttribute UsuarioFilter filtro,
             @ParameterObject
-            @PageableDefault(size = 20, sort = "nome", direction = Sort.Direction.ASC)
-            Pageable pageable
+            @PageableDefault(size = 20, sort = "nome", direction = Sort.Direction.ASC) Pageable pageable
     ) {
         log.info("🗃️ Filtros aplicados: {}", filtro);
         return ResponseEntity.ok(service.consultarComFiltro(filtro, pageable));
