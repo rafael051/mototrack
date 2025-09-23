@@ -1,0 +1,16 @@
+-- V4: Índices e ajustes de defaults.
+-- Objetivo: melhorar desempenho em junções/consultas e padronizar timestamps de criação.
+
+-- Índices em FKs
+CREATE INDEX IDX_MOTO_FILIAL        ON TB_MOTO (ID_FILIAL);
+CREATE INDEX IDX_EVENTO_MOTO        ON TB_EVENTO (ID_MOTO);
+CREATE INDEX IDX_AGENDAMENTO_MOTO   ON TB_AGENDAMENTO (ID_MOTO);
+CREATE INDEX IDX_USUARIO_FILIAL     ON TB_USUARIO (ID_FILIAL);
+
+-- Índices de busca comuns
+CREATE INDEX IDX_USUARIO_NOME        ON TB_USUARIO (NM_USUARIO);
+CREATE INDEX IDX_USUARIO_EMAIL_LOWER ON TB_USUARIO (LOWER(DS_EMAIL));
+
+-- Defaults de criação (se não definidos pela aplicação)
+ALTER TABLE TB_MOTO        MODIFY (DT_CRIACAO DEFAULT SYSTIMESTAMP);
+ALTER TABLE TB_AGENDAMENTO MODIFY (DT_CRIACAO DEFAULT SYSTIMESTAMP);

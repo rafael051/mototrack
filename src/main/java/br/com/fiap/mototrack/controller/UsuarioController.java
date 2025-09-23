@@ -16,29 +16,47 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize; // ✅ proteção por perfil (Sprint 3)
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 /**
  * ## 👤 Controller: UsuarioController
  *
- * Controlador responsável pelos endpoints REST da entidade Usuario.
- * Permite cadastrar, listar, buscar, atualizar, deletar e filtrar registros de usuários do sistema.
+ * Controlador REST responsável pelos endpoints da entidade <b>Usuario</b>.
+ * Oferece operações de criação, consulta, atualização, exclusão e busca com filtros dinâmicos.
  *
- * ✅ Adequações Sprint 3:
- * - Proteção de rotas com base em perfil via @PreAuthorize (USER/ADMIN).
- *   * Se preferir, as mesmas regras podem (também) ser aplicadas por URL em SecurityConfig.
+ * ### ✅ Adequações Sprint 3 (Segurança e Boas Práticas)
+ * - Proteção por perfil (roles) com {@link PreAuthorize}: ADMIN e USER.
+ * - Documentação com OpenAPI/Swagger e exigência de segurança ({@link SecurityRequirement}).
+ *   > Observação: Se estiver usando sessão (form login), o "cadeado" no Swagger indica proteção,
+ *   > mas a autenticação acontece via sessão do navegador. Se adotar JWT depois, mantenha "bearerAuth".
+ * - Respostas padronizadas com {@link ResponseEntity}.
+ * - Paginação e ordenação nos endpoints de consulta.
+ *
+ * ### 🔐 Papéis/Autorização
+ * - ADMIN: criar, atualizar e excluir usuários.
+ * - USER/ADMIN: consultar (listar, buscar por ID, consultar com filtros).
+ *
+ * ### 📌 Observações Importantes
+ * - Evite logar dados sensíveis (ex.: senha). Aqui os logs são informativos e não imprimem o DTO inteiro.
+ * - Mantenha {@code @EnableMethodSecurity(prePostEnabled = true)} no SecurityConfig para habilitar @PreAuthorize.
+ * - Por padrão, {@code hasRole('ADMIN')} verifica a authority {@code ROLE_ADMIN}.
+ *
+ * @author
+ *   Equipe MotoTrack — Mottu
  */
 @Validated
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Usuario", description = "Endpoints relacionados ao controle de usuários do sistema Mottu")
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
-@RequestMapping("/usuarios")
+@RequestMapping(value = "/usuarios", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class UsuarioController {
 
@@ -48,33 +66,61 @@ public class UsuarioController {
     /**
      * ### 👤 POST /usuarios
      * Cadastra um novo usuário no sistema.
-     * 🔒 Requer perfil ADMIN.
+     *
+     * #### Regras de Segurança
+     * - 🔒 Requer perfil <b>ADMIN</b>.
+     *
+     * #### Validações
+     * - O corpo da requisição é validado com Bean Validation em {@link UsuarioRequest}.
+     *
+     * #### Respostas
+     * - <b>201 Created</b> com o objeto criado no corpo e cabeçalho <b>Location</b> apontando para <code>/usuarios/{id}</code>.
+     * - <b>400 Bad Request</b> para erros de validação.
+     * - <b>401/403</b> quando o token é inválido/ausente ou o perfil não tem permissão.
      */
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Cadastrar novo usuário", description = "Registra um novo usuário no sistema da Mottu.")
     public ResponseEntity<UsuarioResponse> cadastrar(@RequestBody @Valid UsuarioRequest dto) {
-        log.info("👤 Cadastrando usuário: {}", dto);
-        return ResponseEntity.ok(service.cadastrar(dto));
+        log.info("👤 Solicitada criação de usuário");
+        UsuarioResponse salvo = service.cadastrar(dto);
+        URI location = URI.create("/usuarios/" + salvo.getId());
+        return ResponseEntity.created(location).body(salvo);
     }
 
     /**
      * ### 📄 GET /usuarios
-     * Lista todos os usuários cadastrados.
-     * 🔒 Requer USER ou ADMIN.
+     * Lista todos os usuários cadastrados (não paginado).
+     *
+     * #### Regras de Segurança
+     * - 🔒 Requer perfil <b>USER</b> ou <b>ADMIN</b>.
+     *
+     * #### Respostas
+     * - <b>200 OK</b> com a lista de usuários.
+     * - <b>401/403</b> quando o token é inválido/ausente ou o perfil não tem permissão.
+     *
+     * #### Nota
+     * - Para grandes volumes, considere expor também um endpoint paginado (ex.: <code>/usuarios/filtro</code>).
      */
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping
     @Operation(summary = "Listar todos os usuários", description = "Retorna todos os usuários cadastrados no sistema.")
-    public List<UsuarioResponse> listarTodos() {
-        log.info("📄 Listando todos os usuários.");
-        return service.consultarTodos();
+    public ResponseEntity<List<UsuarioResponse>> listarTodos() {
+        log.info("📄 Listando todos os usuários");
+        return ResponseEntity.ok(service.consultarTodos());
     }
 
     /**
      * ### 🔍 GET /usuarios/{id}
-     * Retorna os dados de um usuário específico por ID.
-     * 🔒 Requer USER ou ADMIN.
+     * Busca os dados de um usuário específico pelo identificador.
+     *
+     * #### Regras de Segurança
+     * - 🔒 Requer perfil <b>USER</b> ou <b>ADMIN</b>.
+     *
+     * #### Respostas
+     * - <b>200 OK</b> com o usuário encontrado.
+     * - <b>404 Not Found</b> se o usuário não existir.
+     * - <b>401/403</b> para problemas de autenticação/autorização.
      */
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping("/{id}")
@@ -86,11 +132,22 @@ public class UsuarioController {
 
     /**
      * ### ✏️ PUT /usuarios/{id}
-     * Atualiza os dados de um usuário específico.
-     * 🔒 Requer perfil ADMIN.
+     * Atualiza os dados de um usuário existente.
+     *
+     * #### Regras de Segurança
+     * - 🔒 Requer perfil <b>ADMIN</b>.
+     *
+     * #### Validações
+     * - O corpo da requisição é validado com Bean Validation em {@link UsuarioRequest}.
+     *
+     * #### Respostas
+     * - <b>200 OK</b> com o usuário atualizado.
+     * - <b>400 Bad Request</b> para erros de validação.
+     * - <b>404 Not Found</b> se o usuário não existir.
+     * - <b>401/403</b> para problemas de autenticação/autorização.
      */
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/{id}")
+    @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Atualizar usuário", description = "Atualiza os dados de um usuário existente no sistema.")
     public ResponseEntity<UsuarioResponse> atualizar(@PathVariable Long id, @RequestBody @Valid UsuarioRequest dto) {
         log.info("✏️ Atualizando usuário ID: {}", id);
@@ -99,8 +156,15 @@ public class UsuarioController {
 
     /**
      * ### 🗑️ DELETE /usuarios/{id}
-     * Remove um usuário do sistema.
-     * 🔒 Requer perfil ADMIN.
+     * Remove um usuário do sistema pelo identificador.
+     *
+     * #### Regras de Segurança
+     * - 🔒 Requer perfil <b>ADMIN</b>.
+     *
+     * #### Respostas
+     * - <b>204 No Content</b> em caso de exclusão bem-sucedida.
+     * - <b>404 Not Found</b> se o usuário não existir.
+     * - <b>401/403</b> para problemas de autenticação/autorização.
      */
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
@@ -113,19 +177,35 @@ public class UsuarioController {
 
     /**
      * ### 🔍 GET /usuarios/filtro
-     * Permite realizar buscas com filtros dinâmicos, paginação e ordenação.
-     * 🔒 Requer USER ou ADMIN.
+     * Consulta usuários aplicando filtros dinâmicos com suporte a paginação e ordenação.
+     *
+     * #### Regras de Segurança
+     * - 🔒 Requer perfil <b>USER</b> ou <b>ADMIN</b>.
+     *
+     * #### Filtros Suportados (exemplos)
+     * - Campos do {@link UsuarioFilter} (ex.: nome, email, status, datas).
+     * - Paginação via {@link Pageable}: <code>size</code>, <code>page</code>.
+     * - Ordenação via <code>sort=campo,ASC|DESC</code>.
+     *
+     * #### Exemplos de Uso
+     * - <code>/usuarios/filtro?nome=ana&email=@empresa.com&size=10&page=0&sort=nome,desc</code>
+     *
+     * #### Respostas
+     * - <b>200 OK</b> com um {@link Page} de {@link UsuarioResponse}.
+     * - <b>401/403</b> para problemas de autenticação/autorização.
      */
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping("/filtro")
-    @Operation(summary = "Filtrar usuários com paginação e ordenação",
-            description = "Permite aplicar filtros nos dados dos usuários com suporte a paginação e ordenação por query params.")
+    @Operation(
+            summary = "Filtrar usuários com paginação e ordenação",
+            description = "Permite aplicar filtros nos dados dos usuários com suporte a paginação e ordenação por query params."
+    )
     public ResponseEntity<Page<UsuarioResponse>> filtrarComPaginacao(
             @ParameterObject @ModelAttribute UsuarioFilter filtro,
             @ParameterObject
             @PageableDefault(size = 20, sort = "nome", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        log.info("🗃️ Filtros aplicados: {}", filtro);
+        log.info("🗃️ Consulta com filtros: {}", filtro);
         return ResponseEntity.ok(service.consultarComFiltro(filtro, pageable));
     }
 }

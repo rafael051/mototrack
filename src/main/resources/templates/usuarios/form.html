@@ -6,9 +6,7 @@
     <title th:text="${#strings.isEmpty(id) ? 'MotoTrack • Novo Usuário' : 'MotoTrack • Editar Usuário'}">MotoTrack • Usuário</title>
 
     <style>
-        :root{
-            --bg:#0f172a;--panel:#111827;--muted:#94a3b8;--text:#e5e7eb;--ring:#2a3344;--primary:#22c55e;--info:#38bdf8;--warn:#f59e0b;--danger:#ef4444
-        }
+        :root{--bg:#0f172a;--panel:#111827;--muted:#94a3b8;--text:#e5e7eb;--ring:#2a3344;--primary:#22c55e;--info:#38bdf8;--warn:#f59e0b;--danger:#ef4444}
         *{box-sizing:border-box}
         body{margin:0;background:linear-gradient(120deg,#0b1224,#0f172a);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:var(--text)}
         .wrap{max-width:1120px;margin:5vh auto;padding:24px}
@@ -19,24 +17,18 @@
         .muted{color:var(--muted);font-size:.95rem}
         .card{background:rgba(17,24,39,.78);backdrop-filter:blur(6px);border:1px solid var(--ring);border-radius:16px;padding:18px}
         .card h2{margin:0 0 10px;font-size:1.25rem}
-        .row{display:flex;gap:10px;flex-wrap:wrap}
         a.btn,button.btn{display:inline-block;border:0;border-radius:10px;padding:10px 14px;font-weight:600;text-decoration:none;cursor:pointer}
-        a.primary,button.primary{background:var(--primary);color:#0b1224}
-        a.info{background:var(--info);color:#06121f}
-        a.warn{background:var(--warn);color:#1a1209}
         a.ghost,button.ghost{background:#0b1224;color:var(--text);border:1px solid var(--ring)}
-        footer{margin-top:28px;color:var(--muted);font-size:.9rem}
-
-        /* ===== Form styles ===== */
+        .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
         form{display:grid;gap:14px}
         .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
         label{display:block;margin:0 0 6px;color:var(--muted);font-weight:600}
         input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--ring);background:#0b1224;color:var(--text);outline:none}
         input:focus,select:focus{border-color:var(--info);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
         .field{padding:10px;background:rgba(6,12,24,.45);border:1px dashed var(--ring);border-radius:12px}
-        .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
         .alert{border-radius:12px;padding:12px 14px;margin-bottom:10px;border:1px solid}
         .alert.error{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.5);color:#fecaca}
+        .alert.ok{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.5);color:#bbf7d0}
         .err{color:#fecaca;font-size:.9rem;margin-top:6px}
         small.hint{color:var(--muted);font-size:.85rem}
     </style>
@@ -44,7 +36,7 @@
 <body>
 <div class="wrap">
 
-    <!-- ===== Cabeçalho ===== -->
+    <!-- Cabeçalho / sessão -->
     <header aria-label="Cabeçalho do sistema">
         <div class="brand">
             <div class="logo" aria-hidden="true"></div>
@@ -57,7 +49,6 @@
             </div>
         </div>
 
-        <!-- Ações de sessão -->
         <nav aria-label="Sessão">
             <a class="btn ghost" th:href="@{/login}" sec:authorize="!isAuthenticated()">Entrar</a>
             <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()" style="display:inline">
@@ -67,14 +58,17 @@
         </nav>
     </header>
 
-    <!-- ===== Conteúdo: Form Usuário ===== -->
+    <!-- Flash de sucesso -->
+    <div class="alert ok" th:if="${msgSucesso}" th:text="${msgSucesso}"></div>
+
+    <!-- Formulário -->
     <main aria-label="Formulário de Usuário" style="margin-top:20px">
         <section class="card" aria-labelledby="form-title">
             <h2 id="form-title" th:text="${#strings.isEmpty(id) ? '👤 Novo Usuário' : '✏️ Editar Usuário'}">👤 Novo Usuário</h2>
             <p class="muted" th:if="${#strings.isEmpty(id)}">Preencha os dados abaixo para criar um novo usuário.</p>
             <p class="muted" th:if="${!#strings.isEmpty(id)}">Atualize apenas os campos necessários. A senha só é exibida na criação.</p>
 
-            <!-- ⚠️ Alerta de erros globais -->
+            <!-- Erros globais -->
             <div class="alert error" th:if="${#fields.hasErrors('*')}">
                 <strong>Erros de validação:</strong>
                 <ul style="margin:8px 0 0 18px">
@@ -82,69 +76,71 @@
                 </ul>
             </div>
 
-            <!-- 📝 Form principal -->
-            <form th:action="${#strings.isEmpty(id) ? @{/usuarios} : @{|/usuarios/${id}|}}"
+            <!-- 📝 Form principal (UI: POST cria em /usuarios/ui e atualiza em /usuarios/ui/{id}) -->
+            <form th:action="${#strings.isEmpty(id) ? @{/usuarios/ui} : @{|/usuarios/ui/${id}|}}"
                   method="post" th:object="${usuario}" aria-describedby="form-title">
 
                 <div class="form-grid">
-                    <!-- Nome -->
+                    <!-- Nome (nm_usuario) -->
                     <div class="field">
                         <label for="nome">Nome</label>
                         <input id="nome" type="text" th:field="*{nome}" placeholder="Nome completo" autocomplete="name" required />
                         <div class="err" th:errors="*{nome}" aria-live="polite"></div>
                     </div>
 
-                    <!-- Email (login) -->
+                    <!-- Email (ds_email) -->
                     <div class="field">
                         <label for="email">Email (login)</label>
                         <input id="email" type="email" th:field="*{email}" placeholder="email@dominio.com" autocomplete="username" required />
                         <div class="err" th:errors="*{email}" aria-live="polite"></div>
                     </div>
 
-                    <!-- CPF -->
-                    <div class="field">
-                        <label for="cpf">CPF</label>
-                        <input id="cpf" type="text" th:field="*{cpf}" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" />
-                        <small class="hint">Aceita formatado ou somente números.</small>
-                        <div class="err" th:errors="*{cpf}" aria-live="polite"></div>
-                    </div>
-
-                    <!-- Perfil -->
+                    <!-- Perfil (tp_perfil) — APENAS USER/ADMIN -->
                     <div class="field">
                         <label for="perfil">Perfil</label>
-                        <select id="perfil" th:field="*{perfil}">
+                        <select id="perfil" th:field="*{perfil}" required>
+                            <option value="" disabled th:selected="${#strings.isEmpty(usuario.perfil)}">Selecione...</option>
                             <option value="USER">USER</option>
                             <option value="ADMIN">ADMIN</option>
                         </select>
                         <div class="err" th:errors="*{perfil}" aria-live="polite"></div>
                     </div>
 
-                    <!-- Senha (somente criação) -->
+                    <!-- Senha (ds_senha) — somente criação -->
                     <div class="field" th:if="${#strings.isEmpty(id)}">
                         <label for="senha">Senha</label>
-                        <input id="senha" type="password" th:field="*{senha}" minlength="6" placeholder="mín. 6 caracteres" autocomplete="new-password" />
+                        <input id="senha" type="password" th:field="*{senha}" minlength="6" placeholder="mín. 6 caracteres" autocomplete="new-password" required />
                         <div class="err" th:errors="*{senha}" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Filial (id_filial) — opcional; exibe se 'filiais' estiver no model -->
+                    <div class="field" th:if="${filiais != null}">
+                        <label for="filial">Filial</label>
+                        <select id="filial" th:field="*{filial.id}">
+                            <option th:value="" th:selected="${usuario.filial == null}">Sem filial</option>
+                            <option th:each="f : ${filiais}" th:value="${f.id}" th:text="${f.nome}"></option>
+                        </select>
+                        <small class="hint">Opcional. Selecione uma filial para vincular o usuário.</small>
+                        <div class="err" th:errors="*{filial}" aria-live="polite"></div>
                     </div>
                 </div>
 
-                <!-- ✅ CSRF -->
+                <!-- CSRF -->
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-                <!-- 🔄 PUT para edição -->
-                <input type="hidden" name="_method" th:value="${#strings.isEmpty(id) ? 'post' : 'put'}" />
-
+                <!-- Ações -->
                 <div class="actions">
-                    <button type="submit" class="btn primary" th:text="${#strings.isEmpty(id) ? 'Salvar Usuário' : 'Atualizar Usuário'}">Salvar Usuário</button>
-                    <a class="btn ghost" th:href="@{/usuarios}">Voltar</a>
+                    <button type="submit" class="btn ghost"
+                            th:text="${#strings.isEmpty(id) ? 'Salvar Usuário' : 'Atualizar Usuário'}">Salvar Usuário</button>
+                    <a class="btn ghost" th:href="@{/usuarios/ui}">Voltar</a>
                 </div>
             </form>
         </section>
     </main>
 
-    <!-- ===== Rodapé ===== -->
     <footer>
         <span>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> MotoTrack</span> •
-        <span>Segurança: form login + roles (USER/ADMIN)</span>
+        <span>Perfis: USER / ADMIN</span>
     </footer>
 </div>
 </body>

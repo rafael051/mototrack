@@ -1,77 +1,86 @@
 package br.com.fiap.mototrack.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // habilita @PreAuthorize
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService; // seu bean JPA já existente
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * # 🔐 SecurityConfiguration (MotoTrack — Sprint 3, JPA)
- *
- * ## ✅ O que esta classe entrega
- * - **Autenticação via formulário** (login/logout)
- * - **Perfis de acesso**: `OPERADOR`, `GESTOR`, `ADMINISTRADOR`
- * - **Proteção de rotas** por perfil (URL-based)
- * - **CSRF habilitado** (compatível com forms Thymeleaf)
- *
- * > Observação:
- * > - Os usuários são carregados do **banco** via `UserDetailsService` (implementação JPA separada).
- * > - Garanta que sua implementação (`JpaUserDetailsService`) mapeie `perfil` → `roles(...)`.
- */
 @Configuration
-@EnableMethodSecurity // opcional: habilita @PreAuthorize nos métodos (defesa fina)
+@EnableMethodSecurity(prePostEnabled = true)
+@RequiredArgsConstructor
 public class SecurityConfiguration {
 
+    private final UserDetailsService userDetailsService;
+
     @Bean
-    SecurityFilterChain security(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                            AuthenticationProvider authProvider) throws Exception {
         http
+                // CSRF habilitado (bom para Thymeleaf/forms)
+                .csrf(csrf -> { })
+
                 .authorizeHttpRequests(auth -> auth
+                        // 🔓 Swagger + estáticos
+                        .requestMatchers(
+                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
+                                "/css/**", "/js/**", "/images/**", "/webjars/**"
+                        ).permitAll()
 
-                        // --- 🌐 Público (assets + tela de login) ---
-                        .requestMatchers("/css/**", "/js/**", "/img/**", "/login", "/logout").permitAll()
+                        // 🔓 Login e erro
+                        .requestMatchers("/login", "/error").permitAll()
 
-                        // --- 👤 Usuários ---
-                        // ADMINISTRADOR gerencia o módulo de usuários (CRUD completo)
-                        .requestMatchers("/usuarios/**").hasRole("ADMINISTRADOR")
+                        // 🌐 UI Thymeleaf (interface)
+                        .requestMatchers("/usuarios/ui/**").authenticated()
 
-                        // --- 📅 Agendamentos ---
-                        // OPERADOR, GESTOR e ADMINISTRADOR podem acessar/operar agendamentos
-                        .requestMatchers("/agendamentos/**").hasAnyRole("OPERADOR", "GESTOR", "ADMINISTRADOR")
+                        // 🌐 API REST (JSON)
+                        .requestMatchers("/usuarios/**").authenticated()
 
-                        // --- 🔒 Demais rotas exigem autenticação ---
+                        // (se tiver um painel admin separado, mantenha também)
+                        .requestMatchers("/admin/**").authenticated()
+
+                        // 🔒 qualquer outra rota requer autenticação
                         .anyRequest().authenticated()
                 )
 
-                // ✅ 🔑 Login por formulário
-                .formLogin(login -> login
-                        .loginPage("/login")                 // sua página Thymeleaf (templates/login.html)
-                        .defaultSuccessUrl("/agendamentos", true) // destino pós-login
+                // Autenticação: seu UserDetailsService + BCrypt
+                .authenticationProvider(authProvider)
+
+                // Form login
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/usuarios/ui", true) // UI como landing pós-login
                         .permitAll()
                 )
 
-                // ✅ 🚪 Logout (sempre via POST /logout)
-                .logout(l -> l
+                // Logout (POST /logout) com CSRF
+                .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout")  // feedback na tela de login
+                        .logoutSuccessUrl("/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 );
 
-        // CSRF permanece habilitado por padrão → incluir token nos forms
         return http.build();
     }
 
-    /**
-     * ## 🔒 PasswordEncoder
-     * Use **BCrypt** para gravar/validar senhas.
-     * > Lembrete: no `UsuarioService`, ao **cadastrar/atualizar**, codifique a senha:
-     * > `usuario.setSenha(passwordEncoder.encode(dto.getSenha()));`
-     */
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    AuthenticationProvider authenticationProvider(PasswordEncoder encoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService); // JPA
+        provider.setPasswordEncoder(encoder);
+        return provider;
     }
 }
