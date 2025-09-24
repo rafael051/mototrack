@@ -1,0 +1,58 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.4'
+    id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'br.com.fiap'
+version = '0.0.1-SNAPSHOT'
+description = 'Sistema inteligente para gestão de motos - MotoTrack Mottu'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    // --- Core Spring ---
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    // --- DB & Migrações ---
+    implementation 'org.flywaydb:flyway-core'
+    runtimeOnly   'org.postgresql:postgresql'
+
+    // --- OpenAPI / Swagger UI ---
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+
+    // --- Utilitários ---
+    implementation 'org.modelmapper:modelmapper:3.1.1'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6:3.1.2.RELEASE'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
+
+    // --- OAuth2 (Google/GitHub) ---
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    // --- Lombok ---
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    // --- Desenvolvimento ---
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+
+    // --- Testes ---
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') { useJUnitPlatform() }

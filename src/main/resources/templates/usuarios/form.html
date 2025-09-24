@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title th:text="${#strings.isEmpty(id) ? 'MotoTrack • Novo Usuário' : 'MotoTrack • Editar Usuário'}">MotoTrack • Usuário</title>
+    <title th:text="${id != null ? 'MotoTrack • Editar Usuário' : 'MotoTrack • Novo Usuário'}">MotoTrack • Usuário</title>
 
     <style>
         :root{--bg:#0f172a;--panel:#111827;--muted:#94a3b8;--text:#e5e7eb;--ring:#2a3344;--primary:#22c55e;--info:#38bdf8;--warn:#f59e0b;--danger:#ef4444}
@@ -64,62 +64,64 @@
     <!-- Formulário -->
     <main aria-label="Formulário de Usuário" style="margin-top:20px">
         <section class="card" aria-labelledby="form-title">
-            <h2 id="form-title" th:text="${#strings.isEmpty(id) ? '👤 Novo Usuário' : '✏️ Editar Usuário'}">👤 Novo Usuário</h2>
-            <p class="muted" th:if="${#strings.isEmpty(id)}">Preencha os dados abaixo para criar um novo usuário.</p>
-            <p class="muted" th:if="${!#strings.isEmpty(id)}">Atualize apenas os campos necessários. A senha só é exibida na criação.</p>
+            <h2 id="form-title" th:text="${id != null ? '✏️ Editar Usuário' : '👤 Novo Usuário'}">👤 Novo Usuário</h2>
+            <p class="muted" th:if="${id == null}">Preencha os dados abaixo para criar um novo usuário.</p>
+            <p class="muted" th:if="${id != null}">Atualize apenas os campos necessários. A senha só é exibida na criação.</p>
 
-            <!-- Erros globais -->
-            <div class="alert error" th:if="${#fields.hasErrors('*')}">
-                <strong>Erros de validação:</strong>
-                <ul style="margin:8px 0 0 18px">
-                    <li th:each="e : ${#fields.errors('*')}" th:text="${e}"></li>
-                </ul>
-            </div>
-
-            <!-- 📝 Form principal (UI: POST cria em /usuarios/ui e atualiza em /usuarios/ui/{id}) -->
-            <form th:action="${#strings.isEmpty(id) ? @{/usuarios/ui} : @{|/usuarios/ui/${id}|}}"
+            <!-- 📝 Form principal -->
+            <form th:action="${id != null} ? @{|/usuarios/ui/${id}|} : @{/usuarios/ui}"
                   method="post" th:object="${usuario}" aria-describedby="form-title">
 
+                <!-- Erros globais (dentro do form com th:object ativo) -->
+                <div class="alert error" th:if="${#fields.hasErrors('*')}">
+                    <strong>Erros de validação:</strong>
+                    <ul style="margin:8px 0 0 18px">
+                        <li th:each="e : ${#fields.errors('*')}" th:text="${e}"></li>
+                    </ul>
+                </div>
+
                 <div class="form-grid">
-                    <!-- Nome (nm_usuario) -->
+                    <!-- Nome -->
                     <div class="field">
                         <label for="nome">Nome</label>
                         <input id="nome" type="text" th:field="*{nome}" placeholder="Nome completo" autocomplete="name" required />
                         <div class="err" th:errors="*{nome}" aria-live="polite"></div>
                     </div>
 
-                    <!-- Email (ds_email) -->
+                    <!-- Email -->
                     <div class="field">
                         <label for="email">Email (login)</label>
                         <input id="email" type="email" th:field="*{email}" placeholder="email@dominio.com" autocomplete="username" required />
                         <div class="err" th:errors="*{email}" aria-live="polite"></div>
                     </div>
 
-                    <!-- Perfil (tp_perfil) — APENAS USER/ADMIN -->
+                    <!-- Perfil -->
                     <div class="field">
                         <label for="perfil">Perfil</label>
                         <select id="perfil" th:field="*{perfil}" required>
-                            <option value="" disabled th:selected="${#strings.isEmpty(usuario.perfil)}">Selecione...</option>
+                            <option value="" disabled th:selected="${usuario == null or usuario.perfil == null}">Selecione...</option>
                             <option value="USER">USER</option>
                             <option value="ADMIN">ADMIN</option>
                         </select>
+
                         <div class="err" th:errors="*{perfil}" aria-live="polite"></div>
                     </div>
 
-                    <!-- Senha (ds_senha) — somente criação -->
-                    <div class="field" th:if="${#strings.isEmpty(id)}">
+                    <!-- Senha — somente criação -->
+                    <div class="field" th:if="${id == null}">
                         <label for="senha">Senha</label>
                         <input id="senha" type="password" th:field="*{senha}" minlength="6" placeholder="mín. 6 caracteres" autocomplete="new-password" required />
                         <div class="err" th:errors="*{senha}" aria-live="polite"></div>
                     </div>
 
-                    <!-- Filial (id_filial) — opcional; exibe se 'filiais' estiver no model -->
+                    <!-- Filial (opcional) -->
                     <div class="field" th:if="${filiais != null}">
                         <label for="filial">Filial</label>
                         <select id="filial" th:field="*{filial.id}">
-                            <option th:value="" th:selected="${usuario.filial == null}">Sem filial</option>
+                            <option th:value="" th:selected="${usuario == null or usuario.filial == null}">Sem filial</option>
                             <option th:each="f : ${filiais}" th:value="${f.id}" th:text="${f.nome}"></option>
                         </select>
+
                         <small class="hint">Opcional. Selecione uma filial para vincular o usuário.</small>
                         <div class="err" th:errors="*{filial}" aria-live="polite"></div>
                     </div>
@@ -131,7 +133,7 @@
                 <!-- Ações -->
                 <div class="actions">
                     <button type="submit" class="btn ghost"
-                            th:text="${#strings.isEmpty(id) ? 'Salvar Usuário' : 'Atualizar Usuário'}">Salvar Usuário</button>
+                            th:text="${id != null ? 'Atualizar Usuário' : 'Salvar Usuário'}">Salvar Usuário</button>
                     <a class="btn ghost" th:href="@{/usuarios/ui}">Voltar</a>
                 </div>
             </form>
