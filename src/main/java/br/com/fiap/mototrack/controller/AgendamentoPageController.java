@@ -61,7 +61,7 @@ public class AgendamentoPageController {
         Page<AgendamentoResponse> page = service.consultarComFiltro(filtro, pageable);
         model.addAttribute("page", page);
         model.addAttribute("filtro", filtro);
-        return "agendamentos/lista"; // templates/agendamentos/lista.html
+        return "agendamentos/list"; // templates/agendamentos/list.html
     }
 
     /**

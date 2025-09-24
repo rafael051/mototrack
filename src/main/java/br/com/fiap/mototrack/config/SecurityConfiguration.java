@@ -2,18 +2,20 @@ package br.com.fiap.mototrack.config;
 
 import br.com.fiap.mototrack.model.Usuario;
 import br.com.fiap.mototrack.repository.UsuarioRepository;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // habilita @PreAuthorize
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
+import org.springframework.security.core.userdetails.UserCache;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.core.userdetails.UserCache;
+import org.springframework.security.web.savedrequest.NullRequestCache;
 
 import java.util.List;
 
@@ -21,20 +23,13 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfiguration {
 
-    // === Beans base ==========================================================
-
+    // === Criptografia ========================================================
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * Carrega usuários do banco por e-mail (case-insensitive).
-     * Converte perfis do domínio para authorities Spring:
-     *  - ADMINISTRADOR/GESTOR -> ROLE_ADMIN
-     *  - OPERADOR -> ROLE_USER
-     *  - USER/ADMIN mantidos
-     */
+    // === UserDetailsService (normaliza perfis) ===============================
     @Bean
     UserDetailsService userDetailsService(UsuarioRepository repo) {
         return (String username) -> {
@@ -50,68 +45,69 @@ public class SecurityConfiguration {
         };
     }
 
-    /**
-     * Provider de autenticação usando JPA + BCrypt.
-     * Se existir um bean UserCache (ex.: do CacheConfig com Caffeine),
-     * ele é injetado e usado para reduzir consultas repetidas no login.
-     */
+    // === Provider com cache opcional ========================================
     @Bean
     AuthenticationProvider authenticationProvider(
             UserDetailsService uds,
             PasswordEncoder encoder,
-            // opcional: só injeta se você tiver um bean UserCache configurado
-            org.springframework.beans.factory.ObjectProvider<UserCache> userCacheOpt
+            ObjectProvider<UserCache> userCacheOpt
     ) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(uds);
         provider.setPasswordEncoder(encoder);
         UserCache userCache = userCacheOpt.getIfAvailable();
-        if (userCache != null) {
-            provider.setUserCache(userCache);
-        }
+        if (userCache != null) provider.setUserCache(userCache);
         return provider;
     }
 
-    // === HTTP security =======================================================
-
+    // === HTTP Security =======================================================
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             AuthenticationProvider authProvider) throws Exception {
         http
-                // CSRF habilitado; ignora na API JSON
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/usuarios/**"))
+                // CSRF: habilitado na UI; ignorado na API JSON
+                .csrf(csrf -> csrf.ignoringRequestMatchers(
+                        "/usuarios/**" // inclua outras APIs REST aqui, se houver
+                ))
 
+                // Autorização
                 .authorizeHttpRequests(auth -> auth
-                        // 🔓 Swagger + estáticos
+                        // Públicos
                         .requestMatchers(
+                                "/", "/index",
+                                "/login", "/error",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-                                "/css/**", "/js/**", "/images/**", "/webjars/**",
-                                "/favicon.ico"
+                                "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico"
                         ).permitAll()
 
-                        // 🔓 Login e erro
-                        .requestMatchers("/login", "/error").permitAll()
+                        // Home autenticada (dashboard)
+                        .requestMatchers("/home/ui").hasAnyRole("USER","ADMIN")
 
-                        // 🌐 UI Thymeleaf (interface)
+                        // UI protegida
                         .requestMatchers("/usuarios/ui/**").authenticated()
 
-                        // 🌐 API REST (JSON)
+                        // API protegida
                         .requestMatchers("/usuarios/**").authenticated()
 
-                        // (exemplo) área admin
-                        .requestMatchers("/admin/**").authenticated()
+                        // Área admin (exemplo)
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // 🔒 o restante exige autenticação
+                        // Demais rotas
                         .anyRequest().authenticated()
                 )
 
-                // Autenticação: seu UserDetailsService + BCrypt (+ cache se existir)
+                // Ignora SavedRequest: pós-login sempre vai para o destino definido
+                .requestCache(c -> c.requestCache(new NullRequestCache()))
+
+                // Provider custom
                 .authenticationProvider(authProvider)
 
-                // Form login
+                // Login form
                 .formLogin(form -> form
-                        .loginPage("/login")                      // precisa existir /templates/login.html
-                        .defaultSuccessUrl("/usuarios/ui", true)  // landing pós-login
+                        .loginPage("/login")              // GET /login -> templates/login.html
+                        .loginProcessingUrl("/login")     // POST /login
+                        .defaultSuccessUrl("/home/ui", true)     // ✅ SEMPRE voltar para a home
+                        .failureUrl("/login?error")
                         .permitAll()
                 )
 
@@ -122,7 +118,10 @@ public class SecurityConfiguration {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
-                );
+                )
+
+                // (Opcional) página de acesso negado se quiser customizar
+                .exceptionHandling(ex -> ex.accessDeniedPage("/error/403"));
 
         return http.build();
     }
