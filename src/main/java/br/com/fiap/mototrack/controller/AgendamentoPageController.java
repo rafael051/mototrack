@@ -4,6 +4,8 @@ import br.com.fiap.mototrack.dto.request.AgendamentoRequest;
 import br.com.fiap.mototrack.dto.response.AgendamentoResponse;
 import br.com.fiap.mototrack.filter.AgendamentoFilter;
 import br.com.fiap.mototrack.service.AgendamentoService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -18,8 +20,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.beans.PropertyEditorSupport;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * UI (Thymeleaf) - AgendamentoPageController
@@ -45,6 +52,22 @@ public class AgendamentoPageController {
     private final AgendamentoService service;
     private final ModelMapper modelMapper;
 
+    /** Binder para datetime-local (HTML5). */
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+        binder.registerCustomEditor(LocalDateTime.class, new PropertyEditorSupport() {
+            @Override public void setAsText(String text) {
+                setValue((text == null || text.isBlank()) ? null : LocalDateTime.parse(text, fmt));
+            }
+            @Override public String getAsText() {
+                LocalDateTime v = (LocalDateTime) getValue();
+                return v == null ? "" : v.format(fmt);
+            }
+        });
+    }
+
+
     /**
      * GET /agendamentos/ui
      * Lista paginada + filtro para a view.
@@ -54,15 +77,39 @@ public class AgendamentoPageController {
     @GetMapping
     public String listar(
             @ParameterObject AgendamentoFilter filtro,
-            @PageableDefault(size = 10, sort = "dataHora", direction = Sort.Direction.ASC) Pageable pageable,
-            Model model
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable,
+            Model model,
+            @RequestParam(value = "denied", required = false) String denied,      // ← aceita ?denied=1
+            jakarta.servlet.http.HttpServletRequest req
     ) {
+        // 1) Mensagem vinda do AccessDeniedHandler (?denied=1)
+        if ("1".equals(denied)) {
+            model.addAttribute("msgErro", "Você não tem permissão para realizar esta ação.");
+        }
+
+        // 2) Mensagens 'flash' guardadas em sessão (erro/ok)
+        jakarta.servlet.http.HttpSession session = req.getSession(false);
+        if (session != null) {
+            Object fe = session.getAttribute("FLASH_MSG_ERRO");
+            if (fe != null) {
+                model.addAttribute("msgErro", fe.toString());
+                session.removeAttribute("FLASH_MSG_ERRO");
+            }
+            Object fk = session.getAttribute("FLASH_MSG_OK");
+            if (fk != null) {
+                model.addAttribute("msgSucesso", fk.toString());
+                session.removeAttribute("FLASH_MSG_OK");
+            }
+        }
+
         log.info("UI >> listando agendamentos | filtro={}, pageable={}", filtro, pageable);
+
         Page<AgendamentoResponse> page = service.consultarComFiltro(filtro, pageable);
         model.addAttribute("page", page);
         model.addAttribute("filtro", filtro);
-        return "agendamentos/list"; // templates/agendamentos/list.html
+        return "agendamentos/list";
     }
+
 
     /**
      * GET /agendamentos/ui/novo
@@ -84,8 +131,10 @@ public class AgendamentoPageController {
     @PostMapping
     public String criar(@ModelAttribute("agendamento") @Valid AgendamentoRequest agendamento,
                         BindingResult binding,
-                        RedirectAttributes ra) {
+                        RedirectAttributes ra,
+                        Model model) {
         if (binding.hasErrors()) {
+            model.addAttribute("id", null); // <-- mantém o título "Novo Agendamento"
             return "agendamentos/form";
         }
         service.cadastrar(agendamento);
@@ -117,8 +166,10 @@ public class AgendamentoPageController {
     public String atualizar(@PathVariable Long id,
                             @ModelAttribute("agendamento") @Valid AgendamentoRequest agendamento,
                             BindingResult binding,
-                            RedirectAttributes ra) {
+                            RedirectAttributes ra,
+                            Model model) {
         if (binding.hasErrors()) {
+            model.addAttribute("id", id);
             return "agendamentos/form";
         }
         service.atualizar(id, agendamento);
@@ -133,8 +184,18 @@ public class AgendamentoPageController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/excluir")
     public String excluir(@PathVariable Long id, RedirectAttributes ra) {
-        service.excluir(id);
-        ra.addFlashAttribute("msgSucesso", "Agendamento excluído com sucesso.");
+        try {
+            service.excluir(id);
+            ra.addFlashAttribute("msgSucesso", "Agendamento excluído com sucesso.");
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            // Ex.: 404 ou 409 lançados pelo service
+            ra.addFlashAttribute("msgErro", e.getReason() != null ? e.getReason() : "Não foi possível excluir.");
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Ex.: registro em uso/constraint
+            ra.addFlashAttribute("msgErro", "Não foi possível excluir: registro em uso.");
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("msgErro", "Erro inesperado ao excluir. Tente novamente.");
+        }
         return "redirect:/agendamentos/ui";
     }
 }

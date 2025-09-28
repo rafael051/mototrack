@@ -1,0 +1,46 @@
+<!-- ===============================
+File: templates/fragments/navbar.html
+Descrição: Apenas a barra superior (marca + sessão).
+=============================== -->
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<header class="navbar" th:fragment="navbar" aria-label="Cabeçalho do sistema">
+    <div class="nv-accent" aria-hidden="true"></div>
+    <div class="nv-bar">
+        <div class="nv-row">
+            <!-- Marca -->
+            <div class="nv-brand">
+                <div class="nv-logo" aria-hidden="true" title="Mottu">
+                    <!-- Ícone "M" simplificado -->
+                    <svg viewBox="0 0 24 24" role="img" aria-label="Mottu">
+                        <path d="M4 19V7c0-1.1.9-2 2-2h2.2l3.2 5 3.2-5H17c1.1 0 2 .9 2 2v12h-3V10.8l-2.6 4.1h-2.8L7 10.8V19H4z" fill="#0d291b"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="nv-title">MotoTrack</h1>
+                    <div class="nv-sub" sec:authorize="isAuthenticated()">
+                        Olá, <strong sec:authentication="name">usuário</strong>
+                        <span style="margin:0 .5rem">•</span>
+                        <span th:with="auths=${#authentication.authorities}" th:if="${auths}!=null">
+<span th:each="a : ${auths}" th:text="${a}">ROLE_USER</span>
+</span>
+                    </div>
+                    <div class="nv-sub" sec:authorize="!isAuthenticated()">Você não está autenticado.</div>
+                </div>
+            </div>
+
+
+            <!-- Sessão -->
+            <nav class="nv-session" aria-label="Sessão">
+                <a class="btn" th:href="@{/login}" sec:authorize="!isAuthenticated()">Entrar</a>
+                <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()" style="display:inline">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button class="btn primary" type="submit">Sair</button>
+                </form>
+            </nav>
+        </div>
+    </div>
+</header>
+</body>
+</html>

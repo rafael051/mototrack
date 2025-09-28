@@ -1,115 +1,96 @@
 <!DOCTYPE html>
-<html lang="pt-br" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MotoTrack • Início</title>
-    <style>
-        :root{--bg:#0f172a;--panel:#111827;--muted:#94a3b8;--text:#e5e7eb;--ring:#2a3344;--primary:#22c55e;--info:#38bdf8;--warn:#f59e0b}
-        *{box-sizing:border-box} body{margin:0;background:linear-gradient(120deg,#0b1224,#0f172a);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:var(--text)}
-        .wrap{max-width:1120px;margin:5vh auto;padding:24px}
-        header{display:flex;align-items:center;justify-content:space-between;gap:16px}
-        .brand{display:flex;align-items:center;gap:12px}
-        .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a)}
-        h1{font-size:1.4rem;margin:0}
-        .muted{color:var(--muted);font-size:.95rem}
-        .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:20px}
-        .card{background:rgba(17,24,39,.78);backdrop-filter:blur(6px);border:1px solid var(--ring);border-radius:16px;padding:18px}
-        .card h3{margin:0 0 8px;font-size:1.05rem}
-        p{margin:0 0 12px;color:var(--muted)}
-        .row{display:flex;gap:10px;flex-wrap:wrap}
-        a.btn,button.btn{display:inline-block;border:0;border-radius:10px;padding:10px 14px;font-weight:600;text-decoration:none;cursor:pointer}
-        a.primary{background:var(--primary);color:#0b1224} a.info{background:var(--info);color:#06121f} a.warn{background:var(--warn);color:#1a1209} a.ghost{background:#0b1224;color:var(--text);border:1px solid var(--ring)}
-        footer{margin-top:28px;color:var(--muted);font-size:.9rem}
-    </style>
-</head>
+<html lang="pt-br"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<th:block th:replace="~{fragments/head :: head('MotoTrack • Início')}"></th:block>
+
 <body>
 <div class="wrap">
 
-    <!-- ===== Cabeçalho ===== -->
-    <header aria-label="Cabeçalho do sistema">
-        <div class="brand">
-            <div class="logo" aria-hidden="true"></div>
-            <div>
-                <h1>MotoTrack</h1>
-                <div class="muted" sec:authorize="isAuthenticated()">
-                    Olá, <strong sec:authentication="name">usuário</strong> — perfis: <span sec:authentication="authorities">ROLE_USER</span>
-                </div>
-                <div class="muted" sec:authorize="!isAuthenticated()">Você não está autenticado.</div>
-            </div>
-        </div>
+    <th:block th:replace="~{fragments/navbar :: navbar}"></th:block>
 
-        <!-- Ações de sessão -->
-        <nav aria-label="Sessão">
-            <a class="btn ghost" th:href="@{/login}" sec:authorize="!isAuthenticated()">Entrar</a>
-            <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()" style="display:inline">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <button class="btn ghost" type="submit">Sair</button>
-            </form>
-        </nav>
-    </header>
+    <!-- Redireciona usuários logados para /home/ui (seguro p/ editor) -->
+    <script th:inline="javascript" sec:authorize="hasAnyRole('USER','ADMIN')">
+        /*<![CDATA[*/
+        (function () {
+            var target = /*[[@{/home/ui}]]*/ '/home/ui';
+            if (window.location.pathname !== target) {
+                window.location.replace(target + window.location.search + window.location.hash);
+            }
+        })();
+        /*]]>*/
+    </script>
 
     <!-- ===== Módulos ===== -->
-    <main class="grid" aria-label="Módulos principais">
+    <main class="grid" aria-label="Módulos principais" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:20px">
+        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="ag-title"
+                 style="background:rgba(17,24,39,.78);backdrop-filter:blur(6px);border:1px solid var(--ring);border-radius:16px;padding:18px">
+            <h3 id="ag-title" style="margin:0 0 8px;font-size:1.05rem">📅 Agendamentos</h3>
+            <p style="margin:0 0 12px;color:var(--muted)">Gerencie reservas e acompanhe o fluxo diário.</p>
+            <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+                <a class="btn primary" th:href="@{/agendamentos/ui}"
+                   style="background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#062b18;border:1px solid transparent;border-radius:12px;padding:10px 14px;text-decoration:none">
+                    Acessar
+                </a>
 
-        <!-- Agendamentos (USER/ADMIN) -->
-        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="ag-title">
-            <h3 id="ag-title">📅 Agendamentos</h3>
-            <p>Gerencie reservas e acompanhe o fluxo diário.</p>
-            <div class="row">
-                <a class="btn primary" th:href="@{/agendamentos}">Abrir módulo</a>
-                <a class="btn ghost" th:href="@{/agendamentos/filtro}">Filtrar</a>
             </div>
         </section>
 
-        <!-- Usuários (ADMIN) -->
-        <section class="card" sec:authorize="hasRole('ADMIN')" aria-labelledby="us-title">
-            <h3 id="us-title">👤 Usuários</h3>
-            <p>Cadastro e gestão de usuários do sistema.</p>
-            <div class="row">
-                <a class="btn info" th:href="@{/usuarios}">Listar</a>
-                <a class="btn warn" th:href="@{/usuarios/filtro}">Filtrar</a>
+        <section class="card" sec:authorize="hasRole('ADMIN')" aria-labelledby="us-title" style="background:rgba(17,24,39,.78);border:1px solid var(--ring);border-radius:16px;padding:18px">
+            <h3 id="us-title" style="margin:0 0 8px;font-size:1.05rem">👤 Usuários</h3>
+            <p style="margin:0 0 12px;color:var(--muted)">Cadastro e gestão de usuários do sistema.</p>
+            <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+                <a class="btn primary" th:href="@{/usuarios/ui}"
+                   style="background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#062b18;border:1px solid transparent;border-radius:12px;padding:10px 14px;text-decoration:none">
+                    Acessar
+                </a>
+
             </div>
         </section>
 
-        <!-- Motos (USER/ADMIN) -->
-        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="mo-title">
-            <h3 id="mo-title">🏍️ Motos</h3>
-            <p>Consulta e manutenção do cadastro de motocicletas.</p>
-            <div class="row">
-                <a class="btn ghost" th:href="@{/motos}">Listar</a>
-                <a class="btn ghost" th:href="@{/motos/filtro}">Filtrar</a>
+        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="mo-title" style="background:rgba(17,24,39,.78);border:1px solid var(--ring);border-radius:16px;padding:18px">
+            <h3 id="mo-title" style="margin:0 0 8px;font-size:1.05rem">🏍️ Motos</h3>
+            <p style="margin:0 0 12px;color:var(--muted)">Consulta e manutenção do cadastro de motocicletas.</p>
+            <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+                <a class="btn primary" th:href="@{/motos/ui}"
+                   style="background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#062b18;border:1px solid transparent;border-radius:12px;padding:10px 14px;text-decoration:none">
+                    Acessar
+                </a>
+
             </div>
         </section>
 
-        <!-- Filiais (USER/ADMIN) -->
-        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="fi-title">
-            <h3 id="fi-title">🏢 Filiais</h3>
-            <p>Unidades operacionais da rede.</p>
-            <div class="row">
-                <a class="btn ghost" th:href="@{/filiais}">Listar</a>
-                <a class="btn ghost" th:href="@{/filiais/filtro}">Filtrar</a>
+        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="fi-title" style="background:rgba(17,24,39,.78);border:1px solid var(--ring);border-radius:16px;padding:18px">
+            <h3 id="fi-title" style="margin:0 0 8px;font-size:1.05rem">🏢 Filiais</h3>
+            <p style="margin:0 0 12px;color:var(--muted)">Unidades operacionais da rede.</p>
+            <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+                <a class="btn primary" th:href="@{/filiais/ui}"
+                   style="background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#062b18;border:1px solid transparent;border-radius:12px;padding:10px 14px;text-decoration:none">
+                    Acessar
+                </a>
+
             </div>
         </section>
 
-        <!-- Eventos (USER/ADMIN) -->
-        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="ev-title">
-            <h3 id="ev-title">🗓️ Eventos</h3>
-            <p>Histórico de movimentações e registros.</p>
-            <div class="row">
-                <a class="btn ghost" th:href="@{/eventos}">Listar</a>
-                <a class="btn ghost" th:href="@{/eventos/filtro}">Filtrar</a>
+        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="ev-title" style="background:rgba(17,24,39,.78);border:1px solid var(--ring);border-radius:16px;padding:18px">
+            <h3 id="ev-title" style="margin:0 0 8px;font-size:1.05rem">🗓️ Eventos</h3>
+            <p style="margin:0 0 12px;color:var(--muted)">Histórico de movimentações e registros.</p>
+            <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+                <a class="btn primary" th:href="@{/eventos/ui}"
+                   style="background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#062b18;border:1px solid transparent;border-radius:12px;padding:10px 14px;text-decoration:none">
+                    Acessar
+                </a>
+
             </div>
         </section>
 
+        <noscript>
+            <p style="color:var(--muted)">Dica: acesse diretamente <a th:href="@{/agendamentos/ui}">/agendamentos/ui</a>.</p>
+        </noscript>
     </main>
 
-    <!-- ===== Rodapé ===== -->
-    <footer>
-        <span>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> MotoTrack</span> •
-        <span>Segurança: form login + roles (USER/ADMIN)</span>
-    </footer>
-
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 </div>
 </body>
 </html>

@@ -27,6 +27,7 @@ dependencies {
 
     // --- DB & Migrações ---
     implementation 'org.flywaydb:flyway-core'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     runtimeOnly   'org.postgresql:postgresql'
 
     // --- OpenAPI / Swagger UI ---

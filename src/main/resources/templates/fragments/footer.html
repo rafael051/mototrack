@@ -1,0 +1,14 @@
+<!-- ===============================
+File: templates/fragments/footer.html
+Descrição: Rodapé simples e consistente.
+=============================== -->
+<footer class="site" th:fragment="footer" aria-label="Rodapé do sistema">
+    <div class="ft-wrap">
+    <span class="ft-text">
+      © <span th:text="${#dates.format(#dates.createNow(),'yyyy')}">2025</span> MotoTrack
+    </span>
+        <small class="ft-text">
+            Build <span th:text="${#dates.format(#dates.createNow(),'dd/MM/yyyy HH:mm')}">--/--/---- --:--</span>
+        </small>
+    </div>
+</footer>

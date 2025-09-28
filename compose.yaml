@@ -1,7 +1,7 @@
 services:
   postgres:
     image: 'postgres:latest'
-    container_name: postgres_m
+    container_name: postgres
     environment:
       - 'POSTGRES_DB=mototrack'
       - 'POSTGRES_PASSWORD=mototrack'

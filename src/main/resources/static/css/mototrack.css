@@ -1,0 +1,379 @@
+/* ===================== */
+/* MotoTrack – Core CSS  */
+/* ===================== */
+
+/* Vars */
+:root{
+    --bg:#0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb; --ring:#2a3344;
+    --primary:#22c55e; --info:#38bdf8; --warn:#f59e0b; --danger:#ef4444
+}
+
+/* Reset/base */
+*{ box-sizing:border-box }
+body{
+    margin:0;
+    background:linear-gradient(120deg,#0b1224,#0f172a);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+    color:var(--text)
+}
+.wrap{ max-width:1120px; margin:5vh auto; padding:24px }
+
+/* Header */
+header{ display:flex; align-items:center; justify-content:space-between; gap:16px }
+.brand{ display:flex; align-items:center; gap:12px }
+.logo{ width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg,#22c55e,#16a34a) }
+h1{ font-size:1.4rem; margin:0 }
+.muted{ color:var(--muted); font-size:.95rem }
+
+/* Card */
+.card{
+    background:rgba(17,24,39,.78);
+    backdrop-filter:blur(6px);
+    border:1px solid var(--ring);
+    border-radius:16px;
+    padding:18px
+}
+/* (consolidado: título do card + alinhamento de ícone/emoji) */
+.card h2{
+    margin:0 0 10px;
+    font-size:1.25rem;
+    display:flex; align-items:center; gap:8px
+}
+
+/* Layout utilitário */
+.row{ display:flex; gap:10px; flex-wrap:wrap }
+
+/* Botões */
+a.btn,button.btn{
+    display:inline-block; border:0; border-radius:10px;
+    padding:10px 14px; font-weight:600; text-decoration:none; cursor:pointer
+}
+a.primary,button.primary{ background:var(--primary); color:#0b1224 }
+a.info,button.info{ background:var(--info); color:#06121f }
+a.warn,button.warn{ background:var(--warn); color:#1a1209 }
+a.ghost,button.ghost{ background:#0b1224; color:var(--text); border:1px solid var(--ring) }
+button.danger{ background:rgba(239,68,68,.12); color:#fecaca; border:1px solid rgba(239,68,68,.5) }
+button.danger:hover{ filter:brightness(1.05) }
+
+/* Footer */
+footer{ margin-top:28px; color:var(--muted); font-size:.9rem }
+
+/* Flash */
+.flash{ border-radius:12px; padding:10px 12px; margin:10px 0; border:1px solid }
+.flash.ok{ background:rgba(34,197,94,.08); border-color:rgba(34,197,94,.5); color:#bbf7d0 }
+
+/* ===================== */
+/* Forms                 */
+/* ===================== */
+
+/* Grid do filtro */
+form.filter{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:10px
+}
+form.filter > div{ min-width:220px }
+
+label{ display:block; margin:0 0 6px; color:var(--muted); font-weight:600 }
+
+/* (consolidado: todos os campos com mesmo estilo) */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+select,
+textarea{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--ring);
+    background:#0b1224;
+    color:var(--text);
+    outline:none
+}
+
+/* Foco (consolidado p/ todos os campos) */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus{
+    border-color:var(--info);
+    box-shadow:0 0 0 3px rgba(56,189,248,.15)
+}
+
+/* Remover setas do number (opcional) */
+input[type="number"]{ -moz-appearance:textfield }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0 }
+
+/* ===================== */
+/* Tabela                */
+/* ===================== */
+
+.table-wrap{ overflow:auto; border:1px solid var(--ring); border-radius:14px }
+table{ width:100%; border-collapse:separate; border-spacing:0 }
+thead th{
+    position:sticky; top:0; background:#0b1224; text-align:left;
+    padding:12px; border-bottom:1px solid var(--ring);
+    font-size:.95rem; color:var(--muted)
+}
+.table-wrap table th, .table-wrap table td{ vertical-align:middle }
+tbody td{ padding:12px; border-bottom:1px solid rgba(42,51,68,.5) }
+tbody tr:hover{ background:rgba(56,189,248,.06) }
+.actions-cell{ white-space:nowrap }
+
+/* Larguras de colunas-chave */
+.table-wrap thead th:nth-child(1){ width:90px }   /* ID */
+.table-wrap thead th:nth-child(5){ width:220px }  /* Ações */
+
+/* Ações: espaçamento e quebra elegante */
+.actions-cell .btn{ margin-right:8px }
+.actions-cell .btn:last-child{ margin-right:0 }
+
+/* ===================== */
+/* Paginação             */
+/* ===================== */
+
+.pager{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; color:var(--muted) }
+.pager a{
+    padding:8px 12px; border-radius:10px; border:1px solid var(--ring);
+    text-decoration:none; color:var(--text)
+}
+.pager strong{ color:var(--text) }
+
+/* ===================== */
+/* Hovers / helpers      */
+/* ===================== */
+
+a.ghost:hover, button.ghost:hover{ filter:brightness(1.06) }
+.pager a:hover{ filter:brightness(1.08) }
+.mt-20{ margin-top:20px }
+
+/* ===================== */
+/* Responsivo            */
+/* ===================== */
+
+@media (max-width:640px){
+    form.filter{ grid-template-columns:1fr }
+}
+@media (max-width:560px){
+    .actions-cell{ white-space:normal }
+    .actions-cell .btn{ display:inline-flex; margin:4px 6px 0 0 }
+}
+
+/* ===================== */
+/* Ícones inline (opcional) */
+/* ===================== */
+
+.icon{ width:1.05em; height:1.05em; vertical-align:-0.15em }
+.btn .icon{ margin-right:.45em }
+.btn.icon-only{ padding:10px; display:inline-grid; place-items:center }
+
+/* === Footer fixo (append-only) === */
+:root{
+    --footer-h: 56px; /* altura do footer */
+}
+
+/* evita o conteúdo ficar escondido atrás do footer fixo */
+body{
+    padding-bottom: calc(var(--footer-h) + env(safe-area-inset-bottom));
+}
+
+/* fixa o <footer> no rodapé da janela */
+footer.site{
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--footer-h);
+    background: rgba(17,24,39,.85);         /* combina com seu --panel */
+    border-top: 1px solid var(--ring);
+    backdrop-filter: blur(6px);
+    z-index: 50;
+    color: var(--muted);
+    font-size: .9rem;
+}
+
+/* centraliza o conteúdo do footer na mesma largura da .wrap */
+footer .ft-wrap{
+    max-width: 1120px;                       /* igual à .wrap */
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* texto do footer */
+footer .ft-text{ color: var(--muted) }
+
+/* em telas pequenas, quebra em duas linhas se precisar */
+@media (max-width: 560px){
+    footer .ft-wrap{
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 16px;
+    }
+}
+
+/* ===================== */
+/* Header fixo completo  */
+/* ===================== */
+
+/* Alturas e reservas */
+:root{
+    --header-h: 64px;   /* altura do cabeçalho */
+    --brand-w: 220px;   /* largura reservada para a marca fixa à esquerda */
+}
+
+/* Evita o conteúdo ficar escondido atrás do header */
+body{
+    padding-top: calc(var(--header-h) + env(safe-area-inset-top));
+}
+
+/* Faixa fixa do header */
+header, header.site{
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--header-h);
+    z-index: 60;
+    background: rgba(17,24,39,.85);
+    border-bottom: 1px solid var(--ring);
+    backdrop-filter: blur(6px);
+
+    /* reserva espaço interno para não colidir com a marca fixa */
+    padding-left: var(--brand-w);
+    display:flex; align-items:center;
+}
+
+/* Container central (opcional no fragmento: <div class="hd-wrap">...) */
+header .hd-wrap{
+    max-width: 1120px;        /* igual à .wrap */
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    width: 100%;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+}
+
+/* Marca fixa à esquerda da janela */
+header .brand{
+    position: fixed;
+    left: 16px;
+    top: calc(env(safe-area-inset-top) + (var(--header-h) - 42px)/2); /* centraliza vertical c/ base no logo 42px */
+    z-index: 70;
+    display:flex; align-items:center; gap:12px;
+}
+
+/* Estilos da marca (mantém os seus) */
+.logo{
+    width:42px; height:42px; border-radius:12px;
+    background:linear-gradient(135deg,#22c55e,#16a34a)
+}
+h1{ font-size:1.4rem; margin:0 }
+.muted{ color:var(--muted); font-size:.95rem }
+
+/* Responsivo: em telas menores, libera a marca e remove a reserva */
+@media (max-width: 560px){
+    header, header.site{ padding-left: 16px }
+    header .brand{
+        position: static;   /* volta para o fluxo normal dentro do header */
+        top:auto; left:auto;
+    }
+}
+
+/* === Inputs de data/hora (append-only) === */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"]{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--ring);
+    background:#0b1224;
+    color:var(--text);
+    outline:none;
+    /* faz os widgets nativos (calendário/reloginho) seguirem o tema escuro */
+    color-scheme: dark;
+}
+
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="datetime-local"]:focus,
+input[type="month"]:focus{
+    border-color:var(--info);
+    box-shadow:0 0 0 3px rgba(56,189,248,.15);
+}
+
+/* deixa o ícone do calendário visível no dark */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator{
+    filter: invert(1) opacity(.85);
+}
+
+/* Utilitários de espaçamento */
+.mt-20{ margin-top:20px }
+.mt-14{ margin-top:14px }
+
+/* Grid: ocupar a linha inteira (substitui style="grid-column:1/-1") */
+.grid-span-all{ grid-column:1 / -1 }
+
+/* Ações de formulário (substitui style="margin-top:10px") */
+.actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px }
+
+/* Flash de erro (tira o style inline do alerta) */
+.flash.err{ background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.5); color:#fecaca }
+
+/* Já cobrimos data/hora/number/textarea antes. Reforço (ok manter): */
+input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"]{
+    color-scheme: dark;
+}
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator{
+    filter: invert(1) opacity(.85);
+}
+
+/* utilitários */
+.mt-20{ margin-top:20px }
+.my-12{ margin-top:12px; margin-bottom:12px }
+.inline{ display:inline }
+
+/* larguras de colunas da tabela (para trocar os style="width") */
+th.col-id{ width:90px }
+th.col-actions{ width:220px }
+
+/* célula “nenhum registro” */
+.text-center{ text-align:center }
+.text-muted{ color:var(--muted) }
+
+/* Campo de senha */
+#senha{
+    width:100%;
+    max-width:420px;          /* deixe 100% se quiser ocupar toda a linha */
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--ring);
+    background:#0b1224;
+    color:var(--text);
+    outline:none;
+    transition:border-color .2s ease, box-shadow .2s ease;
+}
+
+#senha::placeholder{ color:var(--muted) }
+
+#senha:focus{
+    border-color:var(--info);
+    box-shadow:0 0 0 3px rgba(56,189,248,.15);
+}
+
+@media (max-width:640px){
+    #senha{ max-width:100% }
+}

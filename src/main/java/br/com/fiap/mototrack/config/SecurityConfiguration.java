@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserCache;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 
 import java.util.List;
@@ -23,13 +24,22 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfiguration {
 
-    // === Criptografia ========================================================
+    /*
+     * # 🔐 PasswordEncoder
+     * - **BCrypt** para armazenar senhas com hash seguro.
+     */
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // === UserDetailsService (normaliza perfis) ===============================
+    /*
+     * # 👤 UserDetailsService
+     * - **Objetivo:** carregar o usuário por e-mail e **normalizar** o perfil para authorities do Spring.
+     * - **Mapeamento de perfis do domínio → roles do Spring:**
+     *   - `ADMINISTRADOR`, `GESTOR` → `ROLE_ADMIN`
+     *   - `OPERADOR` ou `null`      → `ROLE_USER`
+     */
     @Bean
     UserDetailsService userDetailsService(UsuarioRepository repo) {
         return (String username) -> {
@@ -39,13 +49,17 @@ public class SecurityConfiguration {
             String p = u.getPerfil() == null ? "USER" : u.getPerfil().trim().toUpperCase();
             if (p.equals("ADMINISTRADOR") || p.equals("GESTOR")) p = "ADMIN";
             if (p.equals("OPERADOR")) p = "USER";
-            String role = "ROLE_" + (p.equals("ADMIN") ? "ADMIN" : "USER");
 
+            String role = "ROLE_" + (p.equals("ADMIN") ? "ADMIN" : "USER");
             return new User(u.getEmail(), u.getSenha(), List.of(new SimpleGrantedAuthority(role)));
         };
     }
 
-    // === Provider com cache opcional ========================================
+    /*
+     * # 🧩 AuthenticationProvider
+     * - **DaoAuthenticationProvider** usando o `UserDetailsService` e `PasswordEncoder`.
+     * - **Cache opcional** (se existir um `UserCache` no contexto).
+     */
     @Bean
     AuthenticationProvider authenticationProvider(
             UserDetailsService uds,
@@ -60,22 +74,47 @@ public class SecurityConfiguration {
         return provider;
     }
 
-    // === HTTP Security =======================================================
+    /*
+     * # 🚧 (Opcional) AccessDeniedHandler custom
+     * - **Uso alternativo** ao forward padrão para `/acesso-negado`.
+     * - Redireciona de volta para a página anterior com `?denied=1` e grava uma flash na sessão.
+     * - **Desabilitado por padrão** (veja bloco comentado em `.exceptionHandling`).
+     */
+    @Bean
+    AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, ex) -> {
+            request.getSession().setAttribute("FLASH_MSG_ERRO", "Você não tem permissão para realizar esta ação.");
+            String referer  = request.getHeader("Referer");
+            String fallback = request.getContextPath() + "/agendamentos/ui";
+            String target   = (referer != null && !referer.isBlank()) ? referer : fallback;
+            String sep      = target.contains("?") ? "&" : "?";
+            response.sendRedirect(target + sep + "denied=1"); // PRG
+        };
+    }
+
+    /*
+     * # 🌐 HTTP Security (SecurityFilterChain)
+     * - **CSRF**: ativo para a UI; ignorado nas **APIs** (`/api/**`).
+     * - **Autorização por URL**: UI consistente sem exigir `@PreAuthorize` (se preferir).
+     * - **Acesso negado (403)**: **forward** para `/acesso-negado` (view Thymeleaf) — simples e padronizado.
+     * - **Login/Logout**: formulário tradicional, pós-login sempre em `/home/ui`.
+     */
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             AuthenticationProvider authProvider) throws Exception {
         http
-                // CSRF: habilitado na UI; ignorado na API JSON
-                .csrf(csrf -> csrf.ignoringRequestMatchers(
-                        "/usuarios/**" // inclua outras APIs REST aqui, se houver
-                ))
+                /* ## CSRF
+                 * - Mantenha habilitado para páginas Thymeleaf.
+                 * - Ignore somente caminhos de **API**. */
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
 
-                // Autorização
+                /* ## Autorização por URL
+                 * - Ajuste conforme seus endpoints reais. */
                 .authorizeHttpRequests(auth -> auth
                         // Públicos
                         .requestMatchers(
                                 "/", "/index",
-                                "/login", "/error",
+                                "/login", "/error", "/error/403",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico"
                         ).permitAll()
@@ -83,35 +122,38 @@ public class SecurityConfiguration {
                         // Home autenticada (dashboard)
                         .requestMatchers("/home/ui").hasAnyRole("USER","ADMIN")
 
-                        // UI protegida
+                        // UI (exemplos)
                         .requestMatchers("/usuarios/ui/**").authenticated()
+                        .requestMatchers("/agendamentos/ui/**").hasAnyRole("USER","ADMIN")
 
-                        // API protegida
+                        // APIs REST
+                        .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/usuarios/**").authenticated()
 
-                        // Área admin (exemplo)
+                        // Área admin
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // Demais rotas
                         .anyRequest().authenticated()
                 )
 
-                // Ignora SavedRequest: pós-login sempre vai para o destino definido
+                /* ## Request Cache
+                 * - Não reaproveitar a última requisição; pós-login vai para a URL definida. */
                 .requestCache(c -> c.requestCache(new NullRequestCache()))
 
-                // Provider custom
+                /* ## Autenticação */
                 .authenticationProvider(authProvider)
 
-                // Login form
+                /* ## Login (form) */
                 .formLogin(form -> form
-                        .loginPage("/login")              // GET /login -> templates/login.html
-                        .loginProcessingUrl("/login")     // POST /login
-                        .defaultSuccessUrl("/home/ui", true)     // ✅ SEMPRE voltar para a home
+                        .loginPage("/login")                 // GET /login -> templates/login.html
+                        .loginProcessingUrl("/login")        // POST /login
+                        .defaultSuccessUrl("/home/ui", true) // sempre vai para a home
                         .failureUrl("/login?error")
                         .permitAll()
                 )
 
-                // Logout (POST /logout) com CSRF
+                /* ## Logout */
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout")
@@ -120,8 +162,11 @@ public class SecurityConfiguration {
                         .permitAll()
                 )
 
-                // (Opcional) página de acesso negado se quiser customizar
-                .exceptionHandling(ex -> ex.accessDeniedPage("/error/403"));
+                /* ## Access Denied (403)
+                 * ### Opção A — Simples (ativada):
+                 * - Forward para `/acesso-negado` (renderiza `templates/erro/acesso-negado.html`). */
+                .exceptionHandling(e -> e.accessDeniedPage("/acesso-negado"));
+
 
         return http.build();
     }

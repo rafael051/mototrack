@@ -2,179 +2,129 @@
 <html lang="pt-br"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MotoTrack • Agendamentos</title>
-    <style>
-        :root{--bg:#0f172a;--panel:#111827;--muted:#94a3b8;--text:#e5e7eb;--ring:#2a3344;--primary:#22c55e;--info:#38bdf8;--warn:#f59e0b;--danger:#ef4444}
-        *{box-sizing:border-box}
-        body{margin:0;background:linear-gradient(120deg,#0b1224,#0f172a);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:var(--text)}
-        .wrap{max-width:1120px;margin:5vh auto;padding:24px}
-        header{display:flex;align-items:center;justify-content:space-between;gap:16px}
-        .brand{display:flex;align-items:center;gap:12px}
-        .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a)}
-        h1{font-size:1.4rem;margin:0}
-        .muted{color:var(--muted);font-size:.95rem}
-        .card{background:rgba(17,24,39,.78);backdrop-filter:blur(6px);border:1px solid var(--ring);border-radius:16px;padding:18px}
-        .card h2{margin:0 0 10px;font-size:1.25rem}
-        .row{display:flex;gap:10px;flex-wrap:wrap}
-        a.btn,button.btn{display:inline-block;border:0;border-radius:10px;padding:10px 14px;font-weight:600;text-decoration:none;cursor:pointer}
-        a.primary,button.primary{background:var(--primary);color:#0b1224}
-        a.info{background:var(--info);color:#06121f}
-        a.warn{background:var(--warn);color:#1a1209}
-        a.ghost,button.ghost{background:#0b1224;color:var(--text);border:1px solid var(--ring)}
-        footer{margin-top:28px;color:var(--muted);font-size:.9rem}
-
-        .flash{border-radius:12px;padding:10px 12px;margin:10px 0;border:1px solid}
-        .flash.ok{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.5);color:#bbf7d0}
-
-        form.filter{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
-        label{display:block;margin:0 0 6px;color:var(--muted);font-weight:600}
-        input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--ring);background:#0b1224;color:#e5e7eb;outline:none}
-        input:focus,select:focus{border-color:var(--info);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
-
-        .table-wrap{overflow:auto;border:1px solid var(--ring);border-radius:14px}
-        table{width:100%;border-collapse:separate;border-spacing:0}
-        thead th{position:sticky;top:0;background:#0b1224;text-align:left;padding:12px;border-bottom:1px solid var(--ring);font-size:.95rem;color:var(--muted)}
-        tbody td{padding:12px;border-bottom:1px solid rgba(42,51,68,.5)}
-        tbody tr:hover{background:rgba(56,189,248,.06)}
-        .actions-cell{white-space:nowrap}
-        button.danger{background:rgba(239,68,68,.12);color:#fecaca;border:1px solid rgba(239,68,68,.5)}
-
-        .pager{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;color:var(--muted)}
-        .pager a{padding:8px 12px;border-radius:10px;border:1px solid var(--ring);text-decoration:none;color:var(--text)}
-        .pager strong{color:var(--text)}
-    </style>
+    <th:block th:replace="~{fragments/head :: head('MotoTrack • Agendamentos')}"></th:block>
+    <th:block th:replace="~{fragments/css :: mototrack}"></th:block>
+    <title>MotoTrack</title>
 </head>
+
 <body>
 <div class="wrap">
-    <!-- ===== Cabeçalho ===== -->
-    <header aria-label="Cabeçalho do sistema">
-        <div class="brand">
-            <div class="logo" aria-hidden="true"></div>
-            <div>
-                <h1>MotoTrack</h1>
-                <div class="muted" sec:authorize="isAuthenticated()">Olá, <strong sec:authentication="name">usuário</strong> — perfis: <span sec:authentication="authorities">ROLE_USER</span></div>
-                <div class="muted" sec:authorize="!isAuthenticated()">Você não está autenticado.</div>
-            </div>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- antes: style="margin-top:20px" -->
+    <main class="mt-20" aria-label="Lista de Agendamentos">
+        <div class="page-wrap">
+            <div th:replace="~{fragments/flash :: banners}"></div>
+
+            <section class="card">
+                <h2>📅 Agendamentos</h2>
+
+                <!-- Filtro -->
+                <form class="filter" th:action="@{/agendamentos/ui}" method="get" aria-label="Filtro de agendamentos">
+                    <div>
+                        <label for="f-id">ID</label>
+                        <input id="f-id" type="number" name="id" th:value="${filtro.id}" min="1" />
+                    </div>
+                    <div>
+                        <label for="f-motoId">Moto ID</label>
+                        <input id="f-motoId" type="number" name="motoId" th:value="${filtro.motoId}" min="1" />
+                    </div>
+                    <div>
+                        <label for="f-descricao">Descrição</label>
+                        <input id="f-descricao" type="text" name="descricao" th:value="${filtro.descricao}" placeholder="Texto da descrição" />
+                    </div>
+                    <div>
+                        <label for="f-dataInicio">Data inicial</label>
+                        <input id="f-dataInicio" type="text" name="dataInicio"
+                               placeholder="dd/mm/aaaa"
+                               inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" maxlength="10"
+                               oninput="this.value=this.value.replace(/\D/g,'').slice(0,8).replace(/(\d{2})(\d)/,'$1/$2').replace(/(\d{2})(\d)/,'$1/$2');"
+                               th:value="${filtro.dataInicio != null ? #temporals.format(filtro.dataInicio, 'dd/MM/yyyy') : ''}" />
+                    </div>
+
+                    <div>
+                        <label for="f-dataFim">Data final</label>
+                        <input id="f-dataFim" type="text" name="dataFim"
+                               placeholder="dd/mm/aaaa"
+                               inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" maxlength="10"
+                               oninput="this.value=this.value.replace(/\D/g,'').slice(0,8).replace(/(\d{2})(\d)/,'$1/$2').replace(/(\d{2})(\d)/,'$1/$2');"
+                               th:value="${filtro.dataFim != null ? #temporals.format(filtro.dataFim, 'dd/MM/yyyy') : ''}" />
+                    </div>
+
+                    <div class="row">
+                        <button class="btn ghost" type="submit">Filtrar</button>
+                        <a class="btn ghost" th:href="@{/agendamentos/ui}">Limpar</a>
+                    </div>
+                </form>
+
+                <!-- Ações ADMIN – antes: style="margin:12px 0" -->
+                <div class="row my-12" sec:authorize="hasRole('ADMIN')">
+                    <a class="btn primary" th:href="@{/agendamentos/ui/novo}">➕ Novo agendamento</a>
+                </div>
+
+                <!-- Tabela -->
+                <div class="table-wrap" role="region" aria-label="Tabela de agendamentos">
+                    <table>
+                        <thead>
+                        <tr>
+                            <!-- antes: style="width:90px" -->
+                            <th class="col-id">ID</th>
+                            <th>Data/Hora</th>
+                            <th>Moto ID</th>
+                            <th>Descrição</th>
+                            <!-- antes: style="width:220px" -->
+                            <th class="col-actions">Ações</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="row : ${page.content}">
+                            <td th:text="${row.id}"></td>
+                            <td th:text="${#temporals.format(row.dataAgendada, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${row.motoId}"></td>
+                            <td th:text="${row.descricao}"></td>
+                            <td class="actions-cell">
+                                <a class="btn warn" th:href="@{|/agendamentos/ui/${row.id}/editar|}">Editar</a>
+                                <!-- antes: style="display:inline" -->
+                                <form class="inline" th:action="@{|/agendamentos/ui/${row.id}/excluir|}" method="post">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button class="btn danger" type="submit" onclick="return confirm('Confirmar exclusão?')">Excluir</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${page.content.size() == 0}">
+                            <td colspan="5" class="text-center">
+                                <span class="text-muted">Nenhum registro encontrado.</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                <div class="pager" aria-label="Paginação">
+                    <span>Página <strong th:text="${page.number + 1}"></strong> de <strong th:text="${page.totalPages}"></strong></span>
+
+                    <span th:if="${page.hasPrevious()}">
+            <a th:href="@{|/agendamentos/ui?page=${page.number - 1}&size=${page.size}
+                            &id=${filtro.id}&motoId=${filtro.motoId}
+                            &descricao=${filtro.descricao}
+                            &dataInicio=${filtro.dataInicio}&dataFim=${filtro.dataFim}|}">Anterior</a>
+          </span>
+
+                    <span th:if="${page.hasNext()}">
+            <a th:href="@{|/agendamentos/ui?page=${page.number + 1}&size=${page.size}
+                            &id=${filtro.id}&motoId=${filtro.motoId}
+                            &descricao=${filtro.descricao}
+                            &dataInicio=${filtro.dataInicio}&dataFim=${filtro.dataFim}|}">Próxima</a>
+          </span>
+                </div>
+            </section>
         </div>
-        <nav aria-label="Sessão">
-            <a class="btn ghost" th:href="@{/login}" sec:authorize="!isAuthenticated()">Entrar</a>
-            <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()" style="display:inline">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <button class="btn ghost" type="submit">Sair</button>
-            </form>
-        </nav>
-    </header>
-
-    <!-- ===== Conteúdo: Lista de Agendamentos ===== -->
-    <main style="margin-top:20px" aria-label="Lista de Agendamentos">
-        <!-- Flash success -->
-        <div class="flash ok" th:if="${message}" th:text="${message}"></div>
-
-        <section class="card">
-            <h2>📅 Agendamentos</h2>
-            <!-- Filtro -->
-            <form class="filter" th:action="@{/agendamentos/filtro}" method="get" aria-label="Filtro de agendamentos">
-                <div>
-                    <label for="f-dataInicial">Data inicial</label>
-                    <input id="f-dataInicial" type="datetime-local" name="dataInicial" th:value="${filtro.dataInicial}" />
-                </div>
-                <div>
-                    <label for="f-dataFinal">Data final</label>
-                    <input id="f-dataFinal" type="datetime-local" name="dataFinal" th:value="${filtro.dataFinal}" />
-                </div>
-                <div>
-                    <label for="f-status">Status</label>
-                    <select id="f-status" name="status" th:value="${filtro.status}">
-                        <option value="">Todos</option>
-                        <option value="PENDENTE">PENDENTE</option>
-                        <option value="CONFIRMADO">CONFIRMADO</option>
-                        <option value="CANCELADO">CANCELADO</option>
-                        <option value="CONCLUIDO">CONCLUIDO</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="f-filial">Filial</label>
-                    <input id="f-filial" type="text" name="filial" th:value="${filtro.filial}" placeholder="Código/Nome da Filial" />
-                </div>
-                <div>
-                    <label for="f-usuario">Usuário</label>
-                    <input id="f-usuario" type="text" name="usuario" th:value="${filtro.usuario}" placeholder="Nome/Email do Usuário" />
-                </div>
-                <div>
-                    <label for="f-placa">Placa</label>
-                    <input id="f-placa" type="text" name="placa" th:value="${filtro.placa}" placeholder="AAA0A00" />
-                </div>
-                <div class="row">
-                    <button class="btn ghost" type="submit">Filtrar</button>
-                    <a class="btn ghost" th:href="@{/agendamentos}">Limpar</a>
-                </div>
-            </form>
-
-            <!-- Ações ADMIN -->
-            <div class="row" style="margin:12px 0" sec:authorize="hasRole('ADMIN')">
-                <a class="btn primary" th:href="@{/agendamentos/novo}">➕ Novo agendamento</a>
-            </div>
-
-            <!-- Tabela -->
-            <div class="table-wrap" role="region" aria-label="Tabela de agendamentos">
-                <table>
-                    <thead>
-                    <tr>
-                        <th style="width:90px">ID</th>
-                        <th>Data/Hora</th>
-                        <th>Usuário</th>
-                        <th>Placa</th>
-                        <th>Filial</th>
-                        <th>Status</th>
-                        <th style="width:260px">Ações</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="row : ${page.content}">
-                        <td th:text="${row.id}"></td>
-                        <td th:text="${#temporals.format(row.dataHora, 'dd/MM/yyyy HH:mm')}"></td>
-                        <td th:text="${row.usuarioNome}"></td>
-                        <td th:text="${row.placa}"></td>
-                        <td th:text="${row.filialNome}"></td>
-                        <td th:text="${row.status}"></td>
-                        <td class="actions-cell">
-                            <a class="btn info" th:href="@{|/agendamentos/${row.id}|}">Detalhes</a>
-                            <a class="btn warn" th:href="@{|/agendamentos/${row.id}/editar|}" sec:authorize="hasRole('ADMIN')">Editar</a>
-                            <form th:action="@{|/agendamentos/${row.id}|}" method="post" style="display:inline" sec:authorize="hasRole('ADMIN')">
-                                <input type="hidden" name="_method" value="delete" />
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                                <button class="btn danger" type="submit" onclick="return confirm('Confirmar exclusão?')">Excluir</button>
-                            </form>
-                        </td>
-                    </tr>
-                    <tr th:if="${page.content.size() == 0}">
-                        <td colspan="7" style="text-align:center;color:var(--muted)">Nenhum registro encontrado.</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Paginação (preservando filtros) -->
-            <div class="pager" aria-label="Paginação">
-                <span>Página <strong th:text="${page.number + 1}"></strong> de <strong th:text="${page.totalPages}"></strong></span>
-                <span th:if="${page.hasPrevious()}">
-                  <a th:href="@{|/agendamentos/filtro?page=${page.number - 1}&size=${page.size}&dataInicial=${filtro.dataInicial}&dataFinal=${filtro.dataFinal}&status=${filtro.status}&filial=${filtro.filial}&usuario=${filtro.usuario}&placa=${filtro.placa}|}">Anterior</a>
-                </span>
-                <span th:if="${page.hasNext()}">
-                  <a th:href="@{|/agendamentos/filtro?page=${page.number + 1}&size=${page.size}&dataInicial=${filtro.dataInicial}&dataFinal=${filtro.dataFinal}&status=${filtro.status}&filial=${filtro.filial}&usuario=${filtro.usuario}&placa=${filtro.placa}|}">Próxima</a>
-                </span>
-            </div>
-        </section>
     </main>
 
-    <!-- ===== Rodapé ===== -->
-    <footer>
-        <span>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> MotoTrack</span> •
-        <span>Segurança: form login + roles (USER/ADMIN)</span>
-    </footer>
+    <div th:replace="~{fragments/footer :: footer}"></div>
 </div>
 </body>
 </html>

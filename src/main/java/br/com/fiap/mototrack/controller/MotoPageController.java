@@ -10,6 +10,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -19,22 +20,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/**
- * UI (Thymeleaf) - MotoPageController
- *
- * Renderiza páginas HTML (lista + form) para gestão de motocicletas.
- * Rotas: /motos/ui/** → retorna nomes de templates.
- *
- * Segurança:
- * - USER/ADMIN: leitura (lista).
- * - ADMIN: criação/edição/exclusão.
- *
- * Views esperadas:
- * - templates/motos/lista.html
- * - templates/motos/form.html
- */
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+
 @Controller
 @RequestMapping("/motos/ui")
 @RequiredArgsConstructor
@@ -49,19 +40,41 @@ public class MotoPageController {
      * GET /motos/ui
      * Lista paginada + filtro (ex.: placa, marca, modelo, status).
      * Ordenação padrão: placa ASC.
+     * Aceita ?denied=1 vindo do AccessDeniedHandler.
+     * Lê mensagens flash salvas em sessão (FLASH_MSG_OK / FLASH_MSG_ERRO).
      */
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping
     public String listar(
             @ParameterObject MotoFilter filtro,
             @PageableDefault(size = 10, sort = "placa", direction = Sort.Direction.ASC) Pageable pageable,
-            Model model
+            Model model,
+            @RequestParam(value = "denied", required = false) String denied,
+            HttpServletRequest req
     ) {
+        if ("1".equals(denied)) {
+            model.addAttribute("msgErro", "Você não tem permissão para realizar esta ação.");
+        }
+
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            Object fe = session.getAttribute("FLASH_MSG_ERRO");
+            if (fe != null) {
+                model.addAttribute("msgErro", fe.toString());
+                session.removeAttribute("FLASH_MSG_ERRO");
+            }
+            Object fk = session.getAttribute("FLASH_MSG_OK");
+            if (fk != null) {
+                model.addAttribute("msgSucesso", fk.toString());
+                session.removeAttribute("FLASH_MSG_OK");
+            }
+        }
+
         log.info("UI >> listando motos | filtro={}, pageable={}", filtro, pageable);
         Page<MotoResponse> page = service.consultarComFiltro(filtro, pageable);
         model.addAttribute("page", page);
         model.addAttribute("filtro", filtro);
-        return "motos/lista"; // templates/motos/lista.html
+        return "motos/list"; // templates/motos/list.html
     }
 
     /**
@@ -73,20 +86,24 @@ public class MotoPageController {
     public String novo(Model model) {
         model.addAttribute("moto", new MotoRequest());
         model.addAttribute("id", null);
-        // Se o form tiver seleção de filial, injete a lista aqui (ex. model.addAttribute("filiais", filialService.consultarTodos()))
+        // Ex.: se houver combo de filiais: model.addAttribute("filiais", filialService.consultarTodos());
         return "motos/form"; // templates/motos/form.html
     }
 
     /**
      * POST /motos/ui
-     * Cria uma moto a partir do form.
+     * Cria a moto via form.
      */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public String criar(@ModelAttribute("moto") @Valid MotoRequest moto,
                         BindingResult binding,
-                        RedirectAttributes ra) {
-        if (binding.hasErrors()) return "motos/form";
+                        RedirectAttributes ra,
+                        Model model) {
+        if (binding.hasErrors()) {
+            model.addAttribute("id", null);
+            return "motos/form";
+        }
         service.cadastrar(moto);
         ra.addFlashAttribute("msgSucesso", "Moto cadastrada com sucesso.");
         return "redirect:/motos/ui";
@@ -116,8 +133,12 @@ public class MotoPageController {
     public String atualizar(@PathVariable Long id,
                             @ModelAttribute("moto") @Valid MotoRequest moto,
                             BindingResult binding,
-                            RedirectAttributes ra) {
-        if (binding.hasErrors()) return "motos/form";
+                            RedirectAttributes ra,
+                            Model model) {
+        if (binding.hasErrors()) {
+            model.addAttribute("id", id);
+            return "motos/form";
+        }
         service.atualizar(id, moto);
         ra.addFlashAttribute("msgSucesso", "Moto atualizada com sucesso.");
         return "redirect:/motos/ui";
@@ -125,13 +146,21 @@ public class MotoPageController {
 
     /**
      * POST /motos/ui/{id}/excluir
-     * Exclui a moto e retorna para a lista.
+     * Exclui a moto e retorna para a lista (com tratamento de erros).
      */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/excluir")
     public String excluir(@PathVariable Long id, RedirectAttributes ra) {
-        service.excluir(id);
-        ra.addFlashAttribute("msgSucesso", "Moto excluída com sucesso.");
+        try {
+            service.excluir(id);
+            ra.addFlashAttribute("msgSucesso", "Moto excluída com sucesso.");
+        } catch (ResponseStatusException e) {
+            ra.addFlashAttribute("msgErro", e.getReason() != null ? e.getReason() : "Não foi possível excluir.");
+        } catch (DataIntegrityViolationException e) {
+            ra.addFlashAttribute("msgErro", "Não foi possível excluir: registro em uso.");
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("msgErro", "Erro inesperado ao excluir. Tente novamente.");
+        }
         return "redirect:/motos/ui";
     }
 }
