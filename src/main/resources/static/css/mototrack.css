@@ -377,3 +377,13 @@ th.col-actions{ width:220px }
 @media (max-width:640px){
     #senha{ max-width:100% }
 }
+
+
+.list-errors {
+    margin: 8px 0 0 18px;
+    padding: 0;
+    list-style: disc;
+}
+.list-errors li {
+    margin: 4px 0;
+}

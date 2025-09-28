@@ -1,150 +1,134 @@
+<!-- File: templates/filiais/form.html -->
 <!DOCTYPE html>
 <html lang="pt-br"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title th:text="${#strings.isEmpty(id) ? 'MotoTrack • Nova Filial' : 'MotoTrack • Editar Filial'}">MotoTrack • Filial</title>
-    <style>
-        :root{--bg:#0f172a;--panel:#111827;--muted:#94a3b8;--text:#e5e7eb;--ring:#2a3344;--primary:#22c55e;--info:#38bdf8;--warn:#f59e0b;--danger:#ef4444}
-        *{box-sizing:border-box}
-        body{margin:0;background:linear-gradient(120deg,#0b1224,#0f172a);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:var(--text)}
-        .wrap{max-width:1120px;margin:5vh auto;padding:24px}
-        header{display:flex;align-items:center;justify-content:space-between;gap:16px}
-        .brand{display:flex;align-items:center;gap:12px}
-        .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a)}
-        h1{font-size:1.4rem;margin:0}
-        .muted{color:var(--muted);font-size:.95rem}
-        .card{background:rgba(17,24,39,.78);backdrop-filter:blur(6px);border:1px solid var(--ring);border-radius:16px;padding:18px}
-        .card h2{margin:0 0 10px;font-size:1.25rem}
-        .row{display:flex;gap:10px;flex-wrap:wrap}
-        a.btn,button.btn{display:inline-block;border:0;border-radius:10px;padding:10px 14px;font-weight:600;text-decoration:none;cursor:pointer}
-        a.primary,button.primary{background:var(--primary);color:#0b1224}
-        a.info{background:var(--info);color:#06121f}
-        a.warn{background:var(--warn);color:#1a1209}
-        a.ghost,button.ghost{background:#0b1224;color:var(--text);border:1px solid var(--ring)}
-        footer{margin-top:28px;color:var(--muted);font-size:.9rem}
-        form{display:grid;gap:14px}
-        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-        label{display:block;margin:0 0 6px;color:var(--muted);font-weight:600}
-        input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--ring);background:#0b1224;color:var(--text);outline:none}
-        input:focus,select:focus,textarea:focus{border-color:var(--info);box-shadow:0 0 0 3px rgba(56,189,248,.15)}
-        .field{padding:10px;background:rgba(6,12,24,.45);border:1px dashed var(--ring);border-radius:12px}
-        .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
-        .alert{border-radius:12px;padding:12px 14px;margin-bottom:10px;border:1px solid}
-        .alert.error{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.5);color:#fecaca}
-        .err{color:#fecaca;font-size:.9rem;margin-top:6px}
-        small.hint{color:var(--muted);font-size:.85rem}
-    </style>
+    <!-- head global (já inclui mototrack.css) -->
+    <th:block th:replace="~{fragments/head :: head(${id != null} ? 'MotoTrack • Editar Filial' : 'MotoTrack • Nova Filial')}"></th:block>
+    <!-- opcional: incluir css explícito -->
+    <th:block th:replace="~{fragments/css :: mototrack}"></th:block>
 </head>
+
 <body>
 <div class="wrap">
-    <header aria-label="Cabeçalho do sistema">
-        <div class="brand">
-            <div class="logo" aria-hidden="true"></div>
-            <div>
-                <h1>MotoTrack</h1>
-                <div class="muted" sec:authorize="isAuthenticated()">Olá, <strong sec:authentication="name">usuário</strong> — perfis: <span sec:authentication="authorities">ROLE_USER</span></div>
-                <div class="muted" sec:authorize="!isAuthenticated()">Você não está autenticado.</div>
-            </div>
-        </div>
-        <nav aria-label="Sessão">
-            <a class="btn ghost" th:href="@{/login}" sec:authorize="!isAuthenticated()">Entrar</a>
-            <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()" style="display:inline">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <button class="btn ghost" type="submit">Sair</button>
-            </form>
-        </nav>
-    </header>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <main aria-label="Formulário de Filial" style="margin-top:20px">
+    <main class="mt-20" aria-label="Formulário de Filial">
+        <!-- Sucesso -->
+        <div class="flash ok" th:if="${msgSucesso}" th:text="${msgSucesso}"></div>
+
+        <!-- Form principal -->
         <section class="card" aria-labelledby="form-title">
-            <h2 id="form-title" th:text="${#strings.isEmpty(id) ? '🏢 Nova Filial' : '✏️ Editar Filial'}">🏢 Nova Filial</h2>
-            <p class="muted" th:if="${#strings.isEmpty(id)}">Preencha os dados abaixo para criar uma filial.</p>
-            <p class="muted" th:if="${!#strings.isEmpty(id)}">Atualize os campos necessários.</p>
+            <h2 id="form-title" th:text="${id != null ? '✏️ Editar Filial' : '🏢 Nova Filial'}">🏢 Nova Filial</h2>
+            <p class="muted" th:if="${id == null}">Preencha os dados abaixo para criar uma filial.</p>
+            <p class="muted" th:if="${id != null}">Atualize apenas os campos necessários.</p>
 
-            <div class="alert error" th:if="${#fields.hasErrors('*')}">
-                <strong>Erros de validação:</strong>
-                <ul style="margin:8px 0 0 18px">
-                    <li th:each="e : ${#fields.errors('*')}" th:text="${e}"></li>
-                </ul>
-            </div>
+            <form th:action="${id != null} ? @{|/filiais/ui/${id}|} : @{/filiais/ui}"
+                  method="post" th:object="${filial}">
+                <!-- Erros globais -->
+                <div class="flash err" th:if="${#fields.hasErrors('*')}">
+                    <strong>Erros de validação:</strong>
+                    <ul style="margin:8px 0 0 18px">
+                        <li th:each="e : ${#fields.errors('*')}" th:text="${e}"></li>
+                    </ul>
+                </div>
 
-            <form th:action="${#strings.isEmpty(id) ? @{/filiais} : @{|/filiais/${id}|}}"
-                  method="post" th:object="${filial}" aria-describedby="form-title">
-
-                <div class="form-grid">
-                    <div class="field">
+                <!-- Grid dos campos (mesmo layout do .filter) -->
+                <div class="filter">
+                    <!-- Nome -->
+                    <div class="grid-span-2-md">
                         <label for="nome">Nome</label>
-                        <input id="nome" type="text" th:field="*{nome}" placeholder="Pátio Lapa" required />
-                        <div class="err" th:errors="*{nome}"></div>
+                        <input id="nome" type="text" th:field="*{nome}" placeholder="Pátio Lapa" required/>
+                        <div class="err" th:errors="*{nome}" aria-live="polite"></div>
                     </div>
 
-                    <div class="field" style="grid-column:1/-1">
+                    <!-- Endereço -->
+                    <div class="grid-span-all">
                         <label for="endereco">Endereço</label>
-                        <input id="endereco" type="text" th:field="*{endereco}" placeholder="Rua, número" />
-                        <div class="err" th:errors="*{endereco}"></div>
+                        <input id="endereco" type="text" th:field="*{endereco}" placeholder="Rua, número, complemento"/>
+                        <div class="err" th:errors="*{endereco}" aria-live="polite"></div>
                     </div>
 
-                    <div class="field">
+                    <!-- Bairro -->
+                    <div>
                         <label for="bairro">Bairro</label>
-                        <input id="bairro" type="text" th:field="*{bairro}" placeholder="Bairro" />
-                        <div class="err" th:errors="*{bairro}"></div>
+                        <input id="bairro" type="text" th:field="*{bairro}" placeholder="Bairro"/>
+                        <div class="err" th:errors="*{bairro}" aria-live="polite"></div>
                     </div>
 
-                    <div class="field">
+                    <!-- Cidade -->
+                    <div>
                         <label for="cidade">Cidade</label>
-                        <input id="cidade" type="text" th:field="*{cidade}" placeholder="São Paulo" />
-                        <div class="err" th:errors="*{cidade}"></div>
+                        <input id="cidade" type="text" th:field="*{cidade}" placeholder="São Paulo"/>
+                        <div class="err" th:errors="*{cidade}" aria-live="polite"></div>
                     </div>
 
-                    <div class="field">
+                    <!-- Estado -->
+                    <div>
                         <label for="estado">Estado</label>
-                        <input id="estado" type="text" th:field="*{estado}" placeholder="SP" maxlength="2" />
-                        <div class="err" th:errors="*{estado}"></div>
+                        <input id="estado" type="text" th:field="*{estado}" placeholder="SP" maxlength="2"/>
+                        <div class="err" th:errors="*{estado}" aria-live="polite"></div>
                     </div>
 
-                    <div class="field">
+                    <!-- CEP -->
+                    <div>
                         <label for="cep">CEP</label>
-                        <input id="cep" type="text" th:field="*{cep}" placeholder="00000-000" />
-                        <div class="err" th:errors="*{cep}"></div>
+                        <input id="cep" type="text" th:field="*{cep}" placeholder="00000-000"
+                               inputmode="numeric" pattern="\d{5}-?\d{3}" maxlength="9"
+                               oninput="this.value=this.value.replace(/\D/g,'').slice(0,8).replace(/(\d{5})(\d)/,'$1-$2');"/>
+                        <div class="err" th:errors="*{cep}" aria-live="polite"></div>
                     </div>
 
-                    <div class="field">
+                    <!-- Latitude -->
+                    <div>
                         <label for="latitude">Latitude</label>
-                        <input id="latitude" type="number" step="0.000001" th:field="*{latitude}" placeholder="-23.564312" />
-                        <div class="err" th:errors="*{latitude}"></div>
+                        <input id="latitude" type="number" step="0.000001" th:field="*{latitude}" placeholder="-23.564312"/>
+                        <div class="err" th:errors="*{latitude}" aria-live="polite"></div>
                     </div>
 
-                    <div class="field">
+                    <!-- Longitude -->
+                    <div>
                         <label for="longitude">Longitude</label>
-                        <input id="longitude" type="number" step="0.000001" th:field="*{longitude}" placeholder="-46.654212" />
-                        <div class="err" th:errors="*{longitude}"></div>
+                        <input id="longitude" type="number" step="0.000001" th:field="*{longitude}" placeholder="-46.654212"/>
+                        <div class="err" th:errors="*{longitude}" aria-live="polite"></div>
                     </div>
 
-                    <div class="field">
+                    <!-- Raio de Geofence -->
+                    <div>
                         <label for="raioGeofenceMetros">Raio de Geofence (m)</label>
-                        <input id="raioGeofenceMetros" type="number" step="1" th:field="*{raioGeofenceMetros}" placeholder="100" />
-                        <div class="err" th:errors="*{raioGeofenceMetros}"></div>
+                        <input id="raioGeofenceMetros" type="number" step="1" th:field="*{raioGeofenceMetros}" placeholder="100"/>
+                        <small class="muted">Distância em metros para cercamento geográfico da filial.</small>
+                        <div class="err" th:errors="*{raioGeofenceMetros}" aria-live="polite"></div>
                     </div>
                 </div>
 
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <input type="hidden" name="_method" th:value="${#strings.isEmpty(id) ? 'post' : 'put'}" />
+                <!-- CSRF -->
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
+                <!-- Ações -->
                 <div class="actions">
-                    <button type="submit" class="btn primary" th:text="${#strings.isEmpty(id) ? 'Salvar Filial' : 'Atualizar Filial'}">Salvar Filial</button>
-                    <a class="btn ghost" th:href="@{/filiais}">Voltar</a>
+                    <button type="submit" class="btn primary"
+                            th:text="${id != null ? 'Atualizar Filial' : 'Salvar Filial'}">Salvar</button>
+                    <a class="btn ghost" th:href="@{/filiais/ui}">Voltar</a>
                 </div>
+            </form>
+        </section>
+
+        <!-- Excluir (somente ADMIN e quando há id) -->
+        <section class="card mt-14" th:if="${id != null}" sec:authorize="hasRole('ADMIN')" aria-label="Ações avançadas">
+            <h2>Ações</h2>
+            <form th:action="@{|/filiais/ui/${id}/excluir|}" method="post" style="display:inline">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button class="btn danger" type="submit" onclick="return confirm('Confirmar exclusão?')">Excluir</button>
             </form>
         </section>
     </main>
 
-    <footer>
-        <span>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> MotoTrack</span> •
-        <span>Segurança: form login + roles (USER/ADMIN)</span>
-    </footer>
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
 </div>
 </body>
 </html>

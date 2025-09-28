@@ -10,6 +10,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -19,7 +20,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * UI (Thymeleaf) - FilialPageController
@@ -32,7 +37,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * - ADMIN: criação/edição/exclusão.
  *
  * Views esperadas:
- * - templates/filiais/lista.html
+ * - templates/filiais/list.html
  * - templates/filiais/form.html
  */
 @Controller
@@ -49,19 +54,43 @@ public class FilialPageController {
      * GET /filiais/ui
      * Lista paginada + filtro para a view.
      * Ordenação padrão: nome ASC.
+     * Também trata ?denied=1 e mensagens flash vindas da sessão.
      */
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping
     public String listar(
             @ParameterObject FilialFilter filtro,
             @PageableDefault(size = 10, sort = "nome", direction = Sort.Direction.ASC) Pageable pageable,
-            Model model
+            Model model,
+            @RequestParam(value = "denied", required = false) String denied,
+            HttpServletRequest req
     ) {
+        // 1) Mensagem de Acesso Negado via query param (?denied=1)
+        if ("1".equals(denied)) {
+            model.addAttribute("msgErro", "Você não tem permissão para realizar esta ação.");
+        }
+
+        // 2) Mensagens flash guardadas em sessão por outros handlers
+        HttpSession session = req.getSession(false);
+        if (session != null) {
+            Object fe = session.getAttribute("FLASH_MSG_ERRO");
+            if (fe != null) {
+                model.addAttribute("msgErro", fe.toString());
+                session.removeAttribute("FLASH_MSG_ERRO");
+            }
+            Object fk = session.getAttribute("FLASH_MSG_OK");
+            if (fk != null) {
+                model.addAttribute("msgSucesso", fk.toString());
+                session.removeAttribute("FLASH_MSG_OK");
+            }
+        }
+
         log.info("UI >> listando filiais | filtro={}, pageable={}", filtro, pageable);
+
         Page<FilialResponse> page = service.consultarComFiltro(filtro, pageable);
         model.addAttribute("page", page);
         model.addAttribute("filtro", filtro);
-        return "filiais/lista";
+        return "filiais/list";
     }
 
     /**
@@ -84,8 +113,10 @@ public class FilialPageController {
     @PostMapping
     public String criar(@ModelAttribute("filial") @Valid FilialRequest filial,
                         BindingResult binding,
-                        RedirectAttributes ra) {
+                        RedirectAttributes ra,
+                        Model model) {
         if (binding.hasErrors()) {
+            model.addAttribute("id", null);
             return "filiais/form";
         }
         service.cadastrar(filial);
@@ -116,8 +147,10 @@ public class FilialPageController {
     public String atualizar(@PathVariable Long id,
                             @ModelAttribute("filial") @Valid FilialRequest filial,
                             BindingResult binding,
-                            RedirectAttributes ra) {
+                            RedirectAttributes ra,
+                            Model model) {
         if (binding.hasErrors()) {
+            model.addAttribute("id", id);
             return "filiais/form";
         }
         service.atualizar(id, filial);
@@ -128,12 +161,21 @@ public class FilialPageController {
     /**
      * POST /filiais/ui/{id}/excluir
      * Exclui e retorna para a lista.
+     * Trata exceções comuns com mensagens amigáveis.
      */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/excluir")
     public String excluir(@PathVariable Long id, RedirectAttributes ra) {
-        service.excluir(id);
-        ra.addFlashAttribute("msgSucesso", "Filial excluída com sucesso.");
+        try {
+            service.excluir(id);
+            ra.addFlashAttribute("msgSucesso", "Filial excluída com sucesso.");
+        } catch (ResponseStatusException e) {
+            ra.addFlashAttribute("msgErro", e.getReason() != null ? e.getReason() : "Não foi possível excluir.");
+        } catch (DataIntegrityViolationException e) {
+            ra.addFlashAttribute("msgErro", "Não foi possível excluir: registro em uso.");
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("msgErro", "Erro inesperado ao excluir. Tente novamente.");
+        }
         return "redirect:/filiais/ui";
     }
 }
