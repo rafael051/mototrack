@@ -1,116 +1,59 @@
+<!-- File: templates/login.html -->
 <!DOCTYPE html>
 <html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
-
-<!-- HEAD global (contém variáveis CSS, fontes e estilos base) -->
-<th:block th:replace="~{fragments/head :: head('MotoTrack • Login')}"></th:block>
-
-<body>
+<head>
+    <!-- HEAD global (define <title>, metas, etc.) -->
+    <th:block th:replace="~{fragments/head :: head('MotoTrack • Login')}"></th:block>
+    <!-- CSS global -->
+    <th:block th:replace="~{fragments/css :: mototrack}"></th:block>
+</head>
 <div class="wrap">
 
-    <!-- ===== Cabeçalho enxuto ===== -->
-    <header aria-label="Cabeçalho do sistema"
-            style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0">
-        <div class="brand" style="display:flex;align-items:center;gap:12px">
-            <div class="logo" aria-hidden="true"
-                 style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a)"></div>
-            <div>
-                <h1 style="font-size:1.4rem;margin:0">MotoTrack</h1>
-                <div class="muted" style="color:#94a3b8">Acesse com suas credenciais.</div>
-            </div>
-        </div>
-        <nav>
+    <!-- NAVBAR global -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-        </nav>
-    </header>
+    <!-- Conteúdo -->
+    <main class="center mt-20" aria-label="Formulário de Login">
+        <section class="card login-card" aria-labelledby="login-title">
+            <h2 id="login-title" class="card-title">🔒 Entrar</h2>
+            <p class="subtitle">Informe seu email e senha para continuar.</p>
 
-    <!-- ===== Cartão de Login ===== -->
-    <div class="center" style="display:grid;place-items:center;margin-top:6vh">
-        <section class="card" aria-labelledby="login-title"
-                 style="width:min(560px,96%);background:rgba(17,24,39,.78);backdrop-filter:blur(6px);
-                      border:1px solid var(--ring);border-radius:18px;padding:22px">
-            <h2 id="login-title" style="margin:0 0 10px;font-size:1.35rem">
-                <span style="margin-right:8px">🔒</span>Entrar
-            </h2>
-            <p class="subtitle" style="margin:0 0 16px;color:#94a3b8">
-                Informe seu email e senha para continuar.
-            </p>
+            <div class="flash danger" th:if="${param.error}">Credenciais inválidas. Verifique usuário/senha.</div>
+            <div class="flash ok" th:if="${param.logout}">Sessão encerrada com sucesso.</div>
 
-            <!-- Alerts -->
-            <div th:if="${param.error}"
-                 style="border-radius:12px;padding:12px 14px;margin:10px 0;border:1px solid rgba(239,68,68,.5);
-                    background:rgba(239,68,68,.08);color:#fecaca">
-                Credenciais inválidas. Verifique usuário/senha.
-            </div>
-            <div th:if="${param.logout}"
-                 style="border-radius:12px;padding:12px 14px;margin:10px 0;border:1px solid rgba(34,197,94,.5);
-                    background:rgba(34,197,94,.08);color:#bbf7d0">
-                Sessão encerrada com sucesso.
-            </div>
-
-            <!-- Formulário -->
-            <form th:action="@{/login}" method="post" aria-describedby="login-title" style="display:grid;gap:14px">
-                <div>
-                    <label for="username" style="display:block;margin:0 0 6px;color:#94a3b8;font-weight:600">
-                        Usuário (email)
-                    </label>
-                    <input id="username" name="username" type="text" placeholder="email@dominio.com"
-                           autocomplete="username" required autofocus
-                           style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--ring);
-                          background:#0b1224;color:var(--text);outline:none"
-                           onfocus="this.style.boxShadow='0 0 0 3px rgba(56,189,248,.15)'; this.style.borderColor='var(--info)'"
-                           onblur="this.style.boxShadow='none'; this.style.borderColor='var(--ring)'" />
+            <form class="form-grid" th:action="@{/login}" method="post" aria-describedby="login-title">
+                <div class="form-field">
+                    <label for="username">Usuário (email)</label>
+                    <input id="username" name="username" type="email" inputmode="email"
+                           placeholder="email@dominio.com" autocomplete="username" required autofocus />
                 </div>
 
-                <div>
-                    <label for="password" style="display:block;margin:0 0 6px;color:#94a3b8;font-weight:600">Senha</label>
-                    <input id="password" name="password" type="password" placeholder="••••••••"
-                           autocomplete="current-password" required
-                           style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--ring);
-                          background:#0b1224;color:var(--text);outline:none"
-                           onfocus="this.style.boxShadow='0 0 0 3px rgba(56,189,248,.15)'; this.style.borderColor='var(--info)'"
-                           onblur="this.style.boxShadow='none'; this.style.borderColor='var(--ring)'" />
+                <div class="form-field">
+                    <label for="password">Senha</label>
+                    <input id="password" name="password" type="password"
+                           placeholder="••••••••" autocomplete="current-password" required />
                 </div>
 
-                <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:6px">
-                    <label style="display:flex;align-items:center;gap:8px;color:#e5e7eb">
+                <div class="row between wrap my-12">
+                    <label class="row gap-8">
                         <input type="checkbox" name="remember-me" />
-                        <small style="color:#94a3b8">Manter conectado</small>
+                        <small class="muted">Manter conectado</small>
                     </label>
-                    <a class="btn alt" th:href="@{/senha/esqueci}" th:if="${false}"
-                       style="border:1px solid var(--ring);border-radius:12px;padding:10px 16px;font-weight:700;background:#111827">
-                        Esqueci a senha
-                    </a>
+                    <a class="btn ghost inline" th:href="@{/senha/esqueci}" th:if="${false}">Esqueci a senha</a>
                 </div>
 
-                <!-- CSRF -->
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-                    <button type="submit" class="btn primary"
-                            style="border:0;border-radius:12px;padding:10px 16px;font-weight:800;background:var(--primary);color:#0b1224">
-                        Entrar
-                    </button>
-                    <a class="btn ghost" th:href="@{/cadastro}" th:if="${false}"
-                       style="border-radius:12px;padding:10px 16px;border:1px solid var(--ring);text-decoration:none">
-                        Criar conta
-                    </a>
+                <div class="actions">
+                    <button type="submit" class="btn primary">Entrar</button>
+                    <a class="btn ghost inline" th:href="@{/cadastro}" th:if="${false}">Criar conta</a>
                 </div>
             </form>
-
-            <!-- OAuth (opcional) -->
-            <div style="margin-top:14px" th:if="${false}">
-                <div style="display:flex;gap:10px;flex-wrap:wrap">
-                    <a class="btn ghost" th:href="@{/oauth2/authorization/google}" style="border-radius:12px;padding:10px 16px">Entrar com Google</a>
-                    <a class="btn ghost" th:href="@{/oauth2/authorization/github}" style="border-radius:12px;padding:10px 16px">Entrar com GitHub</a>
-                </div>
-                <small style="color:#94a3b8">Ative esses botões quando configurar OAuth2 no Spring Security.</small>
-            </div>
         </section>
-    </div>
+    </main>
 
-    <!-- ===== Rodapé via fragment ===== -->
-    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
-
+    <!-- FOOTER global -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
 </div>
 </body>
 </html>

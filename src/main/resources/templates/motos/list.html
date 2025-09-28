@@ -114,10 +114,8 @@
                             <td th:text="${row.latitude}"></td>
                             <td th:text="${row.longitude}"></td>
                             <td class="actions-cell">
-                                <a class="btn warn" th:href="@{|/motos/ui/${row.id}/editar|}"
-                                   sec:authorize="hasRole('ADMIN')">Editar</a>
-                                <form class="inline" th:action="@{|/motos/ui/${row.id}/excluir|}" method="post"
-                                      sec:authorize="hasRole('ADMIN')">
+                                <a class="btn warn" th:href="@{|/motos/ui/${row.id}/editar|}">Editar</a>
+                                <form class="inline" th:action="@{|/motos/ui/${row.id}/excluir|}" method="post">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                     <button class="btn danger" type="submit"
                                             onclick="return confirm('Confirmar exclusão?')">Excluir</button>

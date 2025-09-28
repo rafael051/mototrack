@@ -1,96 +1,94 @@
+<!-- File: templates/index.html -->
 <!DOCTYPE html>
 <html lang="pt-br"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
-<th:block th:replace="~{fragments/head :: head('MotoTrack • Início')}"></th:block>
+<head>
+    <th:block th:replace="~{fragments/head :: head('MotoTrack • Início')}"></th:block>
+    <th:block th:replace="~{fragments/css :: mototrack}"></th:block>
+    <title>MotoTrack</title>
+</head>
 
 <body>
 <div class="wrap">
 
-    <th:block th:replace="~{fragments/navbar :: navbar}"></th:block>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <!-- Redireciona usuários logados para /home/ui (seguro p/ editor) -->
+    <!-- Redireciona usuários autenticados para /home/ui -->
     <script th:inline="javascript" sec:authorize="hasAnyRole('USER','ADMIN')">
         /*<![CDATA[*/
         (function () {
             var target = /*[[@{/home/ui}]]*/ '/home/ui';
             if (window.location.pathname !== target) {
-                window.location.replace(target + window.location.search + window.location.hash);
+                var qs = window.location.search || '';
+                var hash = window.location.hash || '';
+                window.location.replace(target + qs + hash);
             }
         })();
         /*]]>*/
     </script>
 
-    <!-- ===== Módulos ===== -->
-    <main class="grid" aria-label="Módulos principais" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:20px">
-        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="ag-title"
-                 style="background:rgba(17,24,39,.78);backdrop-filter:blur(6px);border:1px solid var(--ring);border-radius:16px;padding:18px">
-            <h3 id="ag-title" style="margin:0 0 8px;font-size:1.05rem">📅 Agendamentos</h3>
-            <p style="margin:0 0 12px;color:var(--muted)">Gerencie reservas e acompanhe o fluxo diário.</p>
-            <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-                <a class="btn primary" th:href="@{/agendamentos/ui}"
-                   style="background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#062b18;border:1px solid transparent;border-radius:12px;padding:10px 14px;text-decoration:none">
-                    Acessar
-                </a>
+    <main class="mt-20" aria-label="Módulos principais">
+        <div class="page-wrap">
+            <div th:replace="~{fragments/flash :: banners}"></div>
 
-            </div>
-        </section>
+            <!-- Grade de módulos -->
+            <section class="grid-modulos" aria-label="Atalhos do sistema">
+                <!-- Agendamentos -->
+                <article class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="ag-title">
+                    <h3 id="ag-title">📅 Agendamentos</h3>
+                    <p class="muted">Gerencie reservas e acompanhe o fluxo diário.</p>
+                    <div class="row">
+                        <a class="btn primary" th:href="@{/agendamentos/ui}">Acessar</a>
+                    </div>
+                </article>
 
-        <section class="card" sec:authorize="hasRole('ADMIN')" aria-labelledby="us-title" style="background:rgba(17,24,39,.78);border:1px solid var(--ring);border-radius:16px;padding:18px">
-            <h3 id="us-title" style="margin:0 0 8px;font-size:1.05rem">👤 Usuários</h3>
-            <p style="margin:0 0 12px;color:var(--muted)">Cadastro e gestão de usuários do sistema.</p>
-            <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-                <a class="btn primary" th:href="@{/usuarios/ui}"
-                   style="background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#062b18;border:1px solid transparent;border-radius:12px;padding:10px 14px;text-decoration:none">
-                    Acessar
-                </a>
+                <!-- Usuários -->
+                <article class="card" sec:authorize="hasRole('ADMIN')" aria-labelledby="us-title">
+                    <h3 id="us-title">👤 Usuários</h3>
+                    <p class="muted">Cadastro e gestão de usuários do sistema.</p>
+                    <div class="row">
+                        <a class="btn primary" th:href="@{/usuarios/ui}">Acessar</a>
+                    </div>
+                </article>
 
-            </div>
-        </section>
+                <!-- Motos -->
+                <article class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="mo-title">
+                    <h3 id="mo-title">🏍️ Motos</h3>
+                    <p class="muted">Consulta e manutenção do cadastro de motocicletas.</p>
+                    <div class="row">
+                        <a class="btn primary" th:href="@{/motos/ui}">Acessar</a>
+                    </div>
+                </article>
 
-        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="mo-title" style="background:rgba(17,24,39,.78);border:1px solid var(--ring);border-radius:16px;padding:18px">
-            <h3 id="mo-title" style="margin:0 0 8px;font-size:1.05rem">🏍️ Motos</h3>
-            <p style="margin:0 0 12px;color:var(--muted)">Consulta e manutenção do cadastro de motocicletas.</p>
-            <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-                <a class="btn primary" th:href="@{/motos/ui}"
-                   style="background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#062b18;border:1px solid transparent;border-radius:12px;padding:10px 14px;text-decoration:none">
-                    Acessar
-                </a>
+                <!-- Filiais -->
+                <article class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="fi-title">
+                    <h3 id="fi-title">🏢 Filiais</h3>
+                    <p class="muted">Unidades operacionais da rede.</p>
+                    <div class="row">
+                        <a class="btn primary" th:href="@{/filiais/ui}">Acessar</a>
+                    </div>
+                </article>
 
-            </div>
-        </section>
+                <!-- Eventos -->
+                <article class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="ev-title">
+                    <h3 id="ev-title">🗓️ Eventos</h3>
+                    <p class="muted">Histórico de movimentações e registros.</p>
+                    <div class="row">
+                        <a class="btn primary" th:href="@{/eventos/ui}">Acessar</a>
+                    </div>
+                </article>
 
-        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="fi-title" style="background:rgba(17,24,39,.78);border:1px solid var(--ring);border-radius:16px;padding:18px">
-            <h3 id="fi-title" style="margin:0 0 8px;font-size:1.05rem">🏢 Filiais</h3>
-            <p style="margin:0 0 12px;color:var(--muted)">Unidades operacionais da rede.</p>
-            <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-                <a class="btn primary" th:href="@{/filiais/ui}"
-                   style="background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#062b18;border:1px solid transparent;border-radius:12px;padding:10px 14px;text-decoration:none">
-                    Acessar
-                </a>
-
-            </div>
-        </section>
-
-        <section class="card" sec:authorize="hasAnyRole('USER','ADMIN')" aria-labelledby="ev-title" style="background:rgba(17,24,39,.78);border:1px solid var(--ring);border-radius:16px;padding:18px">
-            <h3 id="ev-title" style="margin:0 0 8px;font-size:1.05rem">🗓️ Eventos</h3>
-            <p style="margin:0 0 12px;color:var(--muted)">Histórico de movimentações e registros.</p>
-            <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-                <a class="btn primary" th:href="@{/eventos/ui}"
-                   style="background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#062b18;border:1px solid transparent;border-radius:12px;padding:10px 14px;text-decoration:none">
-                    Acessar
-                </a>
-
-            </div>
-        </section>
-
-        <noscript>
-            <p style="color:var(--muted)">Dica: acesse diretamente <a th:href="@{/agendamentos/ui}">/agendamentos/ui</a>.</p>
-        </noscript>
+                <noscript>
+                    <p class="muted">Dica: acesse diretamente <a th:href="@{/agendamentos/ui}">/agendamentos/ui</a>.</p>
+                </noscript>
+            </section>
+        </div>
     </main>
 
-    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <div th:replace="~{fragments/footer :: footer}"></div>
 </div>
+
 </body>
 </html>

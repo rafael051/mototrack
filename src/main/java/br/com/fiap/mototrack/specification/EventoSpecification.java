@@ -5,127 +5,135 @@ import br.com.fiap.mototrack.model.Evento;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * # 🔍 EventoSpecification
  *
- * Esta classe fornece uma **Specification JPA dinâmica** para a entidade `Evento`,
- * permitindo realizar **consultas filtradas e compostas** com base nos parâmetros
- * informados no DTO `EventoFilter`.
+ * Monta dinamicamente uma {@link Specification} para a entidade {@link Evento}
+ * a partir dos valores (opcionais) recebidos em {@link EventoFilter}.
  *
- * ---
- * ## ✅ Filtros Suportados
+ * ## Filtros suportados
+ * - 🔑 Identificadores: `id` (Evento) e `moto.id`
+ * - 🏷️ Atributos textuais: `tipo` (igualdade, case-insensitive), `motivo` e `localizacao` (LIKE, case-insensitive)
+ * - 📅 Período: `dataInicio` e `dataFim` (ambos `LocalDate`) aplicados sobre o campo **dataHora** (`LocalDateTime`)
  *
- * - 🔑 Identificadores: `id`, `moto.id`
- * - 🏷️ Atributos do evento: `tipo`, `motivo`, `localizacao`
- * - 📅 Intervalo de datas: `dataInicio`, `dataFim`
+ * Obs.: O atributo de data na entidade chama-se **dataHora**. Evite usar nomes inexistentes como "dataEvento".
  *
- * ---
  * @author Rafael
  * @since 1.0
  */
 public class EventoSpecification {
 
     /**
-     * ## 🧠 Método principal: `comFiltros`
+     * ## 🧠 Método principal: comFiltros
      *
-     * Constrói dinamicamente uma `Specification<Evento>` com base nos filtros preenchidos no `EventoFilter`.
-     * Os campos são opcionais e adicionados somente quando informados.
+     * Constrói a Specification com base nos campos presentes no filtro.
+     * Cada critério é adicionado somente se houver valor no filtro.
      */
     public static Specification<Evento> comFiltros(EventoFilter f) {
         return (root, query, cb) -> {
+            // Se por algum motivo o filtro vier nulo, não aplicar restrições
+            if (f == null) {
+                return cb.conjunction();
+            }
+
             List<Predicate> p = new ArrayList<>();
 
-            /**
-             * ### 🔍 Filtro por ID do evento
-             * Busca exata por identificador único.
-             */
+            // -----------------------------------------------------------------
+            // 🔑 IDs
+            // -----------------------------------------------------------------
+
+            // id do evento (igualdade exata)
             eq(p, cb, root.get("id"), f.id());
 
-            /**
-             * ### 🛵 Filtro por ID da moto
-             * Permite buscar eventos relacionados a uma determinada moto.
-             */
+            // id da moto (igualdade exata no relacionamento)
             eq(p, cb, root.get("moto").get("id"), f.motoId());
 
-            /**
-             * ### 🏷️ Filtro por Tipo de evento (case-insensitive)
-             * Exemplo: "ENTRADA", "SAÍDA", "MANUTENÇÃO"
-             */
+            // -----------------------------------------------------------------
+            // 🏷️ Atributos textuais
+            // -----------------------------------------------------------------
+
+            // tipo: igualdade ignorando maiúsculas/minúsculas
             eqIgnoreCase(p, cb, root.get("tipo"), f.tipo());
 
-            /**
-             * ### 💬 Filtro por Motivo do evento (contém, case-insensitive)
-             */
+            // motivo: busca parcial (LIKE %valor%), case-insensitive
             like(p, cb, root.get("motivo"), f.motivo());
 
-            /**
-             * ### 🌍 Filtro por Localização (contém, case-insensitive)
-             * Pode representar o nome do pátio, bairro ou área geográfica.
-             */
+            // localizacao: busca parcial (LIKE %valor%), case-insensitive
             like(p, cb, root.get("localizacao"), f.localizacao());
 
-            /**
-             * ### 📅 Filtro por Data do Evento
-             * Permite definir um intervalo entre dataInicio e dataFim.
-             */
-            range(p, cb, root.get("dataEvento"), f.dataInicio(), f.dataFim());
+            // -----------------------------------------------------------------
+            // 📅 Período (dataInicio/dataFim são LocalDate; campo é LocalDateTime)
+            // -----------------------------------------------------------------
+            // - Convertemos:
+            //   * dataInicio -> atStartOfDay() (00:00:00)
+            //   * dataFim    -> atTime(LocalTime.MAX) (23:59:59.999999999)
+            //   Assim, o intervalo inclui o dia inteiro.
+            LocalDateTime dtMin = (f.dataInicio() != null) ? f.dataInicio().atStartOfDay() : null;
+            LocalDateTime dtMax = (f.dataFim() != null) ? f.dataFim().atTime(LocalTime.MAX) : null;
 
-            /**
-             * ### 🔄 Combinação de todos os predicados
-             * Todos os filtros aplicáveis são combinados com operador lógico AND.
-             */
+            // Campo correto na entidade: "dataHora"
+            range(p, cb, root.get("dataHora"), dtMin, dtMax);
+
+            // Combina todos os predicados com AND
             return cb.and(p.toArray(new Predicate[0]));
         };
     }
 
-    // ============================================================================
-    // ## 🔧 Métodos auxiliares reutilizáveis para construção de predicados
-    // ============================================================================
+    // =========================================================================
+    // 🔧 Helpers reutilizáveis
+    // =========================================================================
 
     /**
-     * ### 🧩 `eq` - Igualdade simples
-     * Adiciona um predicado do tipo `campo = valor`, se o valor não for nulo.
+     * Igualdade simples (path = value), somente se value != null.
      */
-    private static <T> void eq(List<Predicate> p, jakarta.persistence.criteria.CriteriaBuilder cb,
-                               jakarta.persistence.criteria.Path<T> path, T value) {
+    private static <T> void eq(List<Predicate> p,
+                               jakarta.persistence.criteria.CriteriaBuilder cb,
+                               jakarta.persistence.criteria.Path<T> path,
+                               T value) {
         if (value != null) {
             p.add(cb.equal(path, value));
         }
     }
 
     /**
-     * ### 🧩 `eqIgnoreCase` - Igualdade ignorando maiúsculas/minúsculas
-     * Aplica um filtro `LOWER(campo) = LOWER(valor)` para campos de texto.
+     * Igualdade ignorando maiúsculas/minúsculas para Strings.
+     * Usa LOWER(path) = LOWER(value).
      */
-    private static void eqIgnoreCase(List<Predicate> p, jakarta.persistence.criteria.CriteriaBuilder cb,
-                                     jakarta.persistence.criteria.Path<String> path, String value) {
+    private static void eqIgnoreCase(List<Predicate> p,
+                                     jakarta.persistence.criteria.CriteriaBuilder cb,
+                                     jakarta.persistence.criteria.Path<String> path,
+                                     String value) {
         if (value != null && !value.isBlank()) {
             p.add(cb.equal(cb.lower(path), value.toLowerCase()));
         }
     }
 
     /**
-     * ### 🧩 `like` - Filtro parcial com LIKE (contém), ignorando case
-     * Aplica `%valor%` com `LOWER`, ideal para buscas textuais.
+     * LIKE case-insensitive: LOWER(path) LIKE %lower(value)%.
+     * Ótimo para buscas parciais em textos.
      */
-    private static void like(List<Predicate> p, jakarta.persistence.criteria.CriteriaBuilder cb,
-                             jakarta.persistence.criteria.Path<String> path, String value) {
+    private static void like(List<Predicate> p,
+                             jakarta.persistence.criteria.CriteriaBuilder cb,
+                             jakarta.persistence.criteria.Path<String> path,
+                             String value) {
         if (value != null && !value.isBlank()) {
             p.add(cb.like(cb.lower(path), "%" + value.toLowerCase() + "%"));
         }
     }
 
     /**
-     * ### 🧩 `range` - Filtro por intervalo (min e max)
-     * Adiciona `>=` para `min` e `<=` para `max`, se presentes.
+     * Intervalo [min, max] para campos comparáveis (>= min e <= max).
+     * Adiciona cada lado somente se o valor existir.
      */
     private static <T extends Comparable<? super T>> void range(List<Predicate> p,
-                                                                jakarta.persistence.criteria.CriteriaBuilder cb, jakarta.persistence.criteria.Path<T> path,
+                                                                jakarta.persistence.criteria.CriteriaBuilder cb,
+                                                                jakarta.persistence.criteria.Path<T> path,
                                                                 T min, T max) {
-
         if (min != null) {
             p.add(cb.greaterThanOrEqualTo(path, min));
         }

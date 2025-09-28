@@ -33,7 +33,6 @@ h1{ font-size:1.4rem; margin:0 }
     border-radius:16px;
     padding:18px
 }
-/* (consolidado: título do card + alinhamento de ícone/emoji) */
 .card h2{
     margin:0 0 10px;
     font-size:1.25rem;
@@ -76,7 +75,7 @@ form.filter > div{ min-width:220px }
 
 label{ display:block; margin:0 0 6px; color:var(--muted); font-weight:600 }
 
-/* (consolidado: todos os campos com mesmo estilo) */
+/* Campos base */
 input[type="text"],
 input[type="email"],
 input[type="number"],
@@ -91,7 +90,7 @@ textarea{
     outline:none
 }
 
-/* Foco (consolidado p/ todos os campos) */
+/* Foco */
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="number"]:focus,
@@ -101,7 +100,7 @@ textarea:focus{
     box-shadow:0 0 0 3px rgba(56,189,248,.15)
 }
 
-/* Remover setas do number (opcional) */
+/* Remover setas do number */
 input[type="number"]{ -moz-appearance:textfield }
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0 }
@@ -186,7 +185,7 @@ footer.site{
     right: 0;
     bottom: 0;
     height: var(--footer-h);
-    background: rgba(17,24,39,.85);         /* combina com seu --panel */
+    background: rgba(17,24,39,.85);
     border-top: 1px solid var(--ring);
     backdrop-filter: blur(6px);
     z-index: 50;
@@ -196,7 +195,7 @@ footer.site{
 
 /* centraliza o conteúdo do footer na mesma largura da .wrap */
 footer .ft-wrap{
-    max-width: 1120px;                       /* igual à .wrap */
+    max-width: 1120px;
     margin: 0 auto;
     padding: 0 24px;
     height: 100%;
@@ -243,15 +242,13 @@ header, header.site{
     background: rgba(17,24,39,.85);
     border-bottom: 1px solid var(--ring);
     backdrop-filter: blur(6px);
-
-    /* reserva espaço interno para não colidir com a marca fixa */
     padding-left: var(--brand-w);
     display:flex; align-items:center;
 }
 
 /* Container central (opcional no fragmento: <div class="hd-wrap">...) */
 header .hd-wrap{
-    max-width: 1120px;        /* igual à .wrap */
+    max-width: 1120px;
     margin: 0 auto;
     padding: 0 24px;
     height: 100%;
@@ -263,12 +260,12 @@ header .hd-wrap{
 header .brand{
     position: fixed;
     left: 16px;
-    top: calc(env(safe-area-inset-top) + (var(--header-h) - 42px)/2); /* centraliza vertical c/ base no logo 42px */
+    top: calc(env(safe-area-inset-top) + (var(--header-h) - 42px)/2);
     z-index: 70;
     display:flex; align-items:center; gap:12px;
 }
 
-/* Estilos da marca (mantém os seus) */
+/* Estilos da marca */
 .logo{
     width:42px; height:42px; border-radius:12px;
     background:linear-gradient(135deg,#22c55e,#16a34a)
@@ -280,7 +277,7 @@ h1{ font-size:1.4rem; margin:0 }
 @media (max-width: 560px){
     header, header.site{ padding-left: 16px }
     header .brand{
-        position: static;   /* volta para o fluxo normal dentro do header */
+        position: static;
         top:auto; left:auto;
     }
 }
@@ -297,7 +294,6 @@ input[type="month"]{
     background:#0b1224;
     color:var(--text);
     outline:none;
-    /* faz os widgets nativos (calendário/reloginho) seguirem o tema escuro */
     color-scheme: dark;
 }
 
@@ -318,35 +314,22 @@ input[type="month"]::-webkit-calendar-picker-indicator{
 }
 
 /* Utilitários de espaçamento */
-.mt-20{ margin-top:20px }
 .mt-14{ margin-top:14px }
 
-/* Grid: ocupar a linha inteira (substitui style="grid-column:1/-1") */
+/* Grid: ocupar a linha inteira */
 .grid-span-all{ grid-column:1 / -1 }
 
-/* Ações de formulário (substitui style="margin-top:10px") */
+/* Ações de formulário */
 .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px }
 
-/* Flash de erro (tira o style inline do alerta) */
+/* Flash de erro */
 .flash.err{ background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.5); color:#fecaca }
 
-/* Já cobrimos data/hora/number/textarea antes. Reforço (ok manter): */
-input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"]{
-    color-scheme: dark;
-}
-input[type="datetime-local"]::-webkit-calendar-picker-indicator,
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator,
-input[type="month"]::-webkit-calendar-picker-indicator{
-    filter: invert(1) opacity(.85);
-}
-
-/* utilitários */
-.mt-20{ margin-top:20px }
+/* utilitários extras */
 .my-12{ margin-top:12px; margin-bottom:12px }
 .inline{ display:inline }
 
-/* larguras de colunas da tabela (para trocar os style="width") */
+/* larguras de colunas da tabela */
 th.col-id{ width:90px }
 th.col-actions{ width:220px }
 
@@ -357,7 +340,7 @@ th.col-actions{ width:220px }
 /* Campo de senha */
 #senha{
     width:100%;
-    max-width:420px;          /* deixe 100% se quiser ocupar toda a linha */
+    max-width:420px;
     padding:10px 12px;
     border-radius:10px;
     border:1px solid var(--ring);
@@ -366,24 +349,269 @@ th.col-actions{ width:220px }
     outline:none;
     transition:border-color .2s ease, box-shadow .2s ease;
 }
-
 #senha::placeholder{ color:var(--muted) }
-
 #senha:focus{
     border-color:var(--info);
     box-shadow:0 0 0 3px rgba(56,189,248,.15);
 }
-
 @media (max-width:640px){
     #senha{ max-width:100% }
 }
-
 
 .list-errors {
     margin: 8px 0 0 18px;
     padding: 0;
     list-style: disc;
 }
-.list-errors li {
-    margin: 4px 0;
+.list-errors li { margin: 4px 0 }
+
+/* Utilitário para centralizar página de erro/acesso */
+.center{
+    display:grid;
+    place-items:center;
+    min-height:60dvh;
 }
+
+/* Emoji/ícone grande do aviso */
+.hero-emoji{
+    font-size:64px;
+    line-height:1;
+    display:block;
+    margin:0 auto 12px;
+}
+
+.logout-card{width:min(560px,96%)}
+.card-title{margin:0 0 8px;font-size:1.35rem}
+.subtitle{margin:0 0 12px}
+.row.end{justify-content:flex-end}
+
+/* ========= FORM CONTROLS ========= */
+.form-field label{display:block;margin:0 0 6px;color:var(--muted);font-weight:600}
+.form-field input,
+.form-field select,
+.form-field textarea{
+    width:100%;
+    padding:12px 14px;
+    border-radius:12px;
+    border:1px solid var(--ring);
+    background:#0b1224;
+    color:var(--text);
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+}
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus{
+    border-color:var(--info);
+    box-shadow:0 0 0 3px rgba(56,189,248,.15);
+}
+
+/* Estilo por tipo — inclui password */
+input[type="password"]{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--ring);
+    background:#0b1224;
+    color:var(--text);
+    outline:none;
+}
+
+/* ===================== */
+/* LOGIN PAGE – overrides */
+/* ===================== */
+.login-page{ padding-top:0; padding-bottom:0 }
+.login-page header.site,
+.login-page footer.site{ position:static; height:auto; border:0; backdrop-filter:none; background:transparent }
+
+.login-page .site-header{ display:flex; align-items:center; gap:16px; padding:12px 0 }
+.login-page .title{ margin:0; font-size:1.25rem }
+
+.login-page .center{ display:grid; place-items:center; min-height:calc(100dvh - 140px) }
+
+.login-page .login-card{ width:min(520px,96%) }
+.login-page .card{ box-shadow:0 10px 30px rgba(0,0,0,.25) }
+
+.login-page .form-grid{ display:grid; gap:14px }
+.login-page .form-field label{ display:block; margin:0 0 6px; color:var(--muted); font-weight:600 }
+.login-page .form-field input,
+.login-page .form-field select,
+.login-page .form-field textarea{
+    width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--ring);
+    background:#0b1224; color:var(--text); outline:none; transition:border-color .15s, box-shadow .15s;
+}
+.login-page .form-field input:focus{ border-color:var(--info); box-shadow:0 0 0 3px rgba(56,189,248,.15) }
+
+.login-page input[type="checkbox"]{
+    width:18px;height:18px;appearance:none;display:inline-block;cursor:pointer;
+    border-radius:6px;border:1px solid var(--ring);background:#0b1224;vertical-align:-3px;
+}
+.login-page input[type="checkbox"]:checked{
+    background:linear-gradient(90deg,var(--primary),color-mix(in srgb,var(--primary) 70%,#0a8f44));
+    border-color:transparent; box-shadow:0 0 0 2px rgba(34,197,94,.25) inset;
+}
+
+.login-page .btn{ display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:10px 16px;font-weight:700;transition:transform .05s, filter .15s }
+.login-page .btn:hover{ filter:brightness(1.05) }
+.login-page .btn:active{ transform:translateY(1px) }
+.login-page .btn.primary{ border:0; background:linear-gradient(90deg,var(--primary),color-mix(in srgb,var(--primary) 70%,#0a8f44)); color:#062b18 }
+
+/* LOGIN com header/footer FIXOS e sem scroll extra */
+body.login-page{
+    padding-top: calc(var(--header-h) + env(safe-area-inset-top));
+    padding-bottom: calc(var(--footer-h) + env(safe-area-inset-bottom));
+}
+.login-page .wrap{ margin: 0 auto; }               /* tira os 5vh */
+.login-page .center{
+    /* desconta header + footer para centralizar sem barra */
+    min-height: calc(100dvh - var(--header-h) - var(--footer-h));
+}
+
+/* info (aproveita suas vars) */
+.flash.info{
+    background: rgba(56,189,248,.08);   /* var(--info) soft */
+    border-color: rgba(56,189,248,.5);
+    color: #bae6fd;
+}
+
+/* botão fechar (usado pelo script) */
+.flash .flash-close{
+    position:absolute; top:6px; right:8px;
+    border:0; background:transparent; font:inherit; cursor:pointer;
+    line-height:1; padding:4px 8px; border-radius:8px; opacity:.7;
+}
+.flash .flash-close:hover,
+.flash .flash-close:focus{
+    opacity:1; outline:2px solid var(--ring);
+}
+
+/* opcional: foco no container para acessibilidade */
+.flash:focus-within{
+    outline:2px solid var(--ring);
+    outline-offset:2px;
+}
+
+/* ===================== */
+/* Navbar (.nv-*)        */
+/* ===================== */
+
+.nv-accent{
+    height:3px;
+    background:linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 70%, #0a8f44));
+}
+
+.nv-bar{
+    background: var(--panel);
+    border-bottom: 1px solid var(--ring);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 10px 30px -15px rgba(0,0,0,.25);
+}
+
+.nv-row{
+    max-width:1120px;
+    margin:0 auto;
+    padding:12px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+}
+
+.nv-brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-width:0; /* permite ellipsis do subtítulo */
+}
+
+.nv-logo{
+    width:40px;
+    height:40px;
+    border-radius:10px;
+    display:grid;
+    place-items:center;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border:1px solid rgba(10,106,60,.25);
+}
+
+.nv-logo svg{
+    width:22px; height:22px;
+    color:#062b18; /* contraste sobre o verde */
+}
+
+.nv-title{
+    margin:0;
+    font-weight:800;
+    letter-spacing:.2px;
+    font-size:1.05rem;
+    line-height:1;
+    color:var(--text);
+}
+
+.nv-sub{
+    margin:.25rem 0 0 0;
+    color:var(--muted);
+    font-weight:600;
+    font-size:.9rem;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.nv-session{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+/* botões da navbar reutilizam seus .btn já existentes */
+.nv-session .btn{
+    border:1px solid var(--ring);
+    background:#0b1224;
+    color:var(--text);
+}
+.nv-session .btn:hover{ filter:brightness(1.06) }
+.nv-session .btn.primary{
+    border:0;
+    background: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 70%, #0a8f44));
+    color:#062b18;
+}
+
+/* Responsivo */
+@media (max-width:640px){
+    .nv-sub{ display:none }
+    .nv-row{ padding:10px 14px }
+    .nv-logo{ width:36px; height:36px }
+}
+
+
+/* utilitário: separador na navbar */
+.nv-sep{ margin:0 .5rem }
+
+/* utilitário: formulários inline (ex.: logout) */
+.form-inline{ display:inline; margin:0; padding:0 }
+
+/* ===== Navbar: “pill” colorido para links ===== */
+:root{
+    --nav-pill: linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 70%, #0a8f44));
+    --nav-pill-text: #062b18;
+}
+
+.nv-session .btn.nav{
+    border:1px solid var(--ring);
+    background:#0b1224;
+    color:var(--text);
+    transition:filter .15s ease, box-shadow .15s ease, transform .05s ease;
+}
+.nv-session .btn.nav:hover{
+    filter:brightness(1.06);
+    box-shadow:0 0 0 3px rgba(34,197,94,.18);
+}
+
+.nv-session .btn.nav-current{
+    background: var(--nav-pill);
+    color: var(--nav-pill-text);
+    border:0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+.nv-session .btn.nav-current:hover{ filter:brightness(1.05) }

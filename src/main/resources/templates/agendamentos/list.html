@@ -86,7 +86,6 @@
                             <td th:text="${row.descricao}"></td>
                             <td class="actions-cell">
                                 <a class="btn warn" th:href="@{|/agendamentos/ui/${row.id}/editar|}">Editar</a>
-                                <!-- antes: style="display:inline" -->
                                 <form class="inline" th:action="@{|/agendamentos/ui/${row.id}/excluir|}" method="post">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                     <button class="btn danger" type="submit" onclick="return confirm('Confirmar exclusão?')">Excluir</button>

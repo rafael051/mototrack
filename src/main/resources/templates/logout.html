@@ -1,52 +1,44 @@
+<!-- File: templates/logout.html -->
 <!DOCTYPE html>
 <html lang="pt-br"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
-<!-- head padrão -->
-<th:block th:replace="~{fragments/head :: head('MotoTrack • Logout')}"></th:block>
+<head>
+    <th:block th:replace="~{fragments/head :: head('MotoTrack • Logout')}"></th:block>
+    <th:block th:replace="~{fragments/css :: mototrack}"></th:block>
+    <title>MotoTrack</title>
+</head>
 
 <body>
 <div class="wrap">
+
     <!-- navbar padrão -->
-    <th:block th:replace="~{fragments/navbar :: navbar}"></th:block>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
     <!-- Cartão de logout -->
-    <div class="center" style="display:grid;place-items:center;margin-top:6vh">
-        <section class="card" aria-labelledby="logout-title"
-                 style="width:min(560px,96%);background:rgba(17,24,39,.78);backdrop-filter:blur(6px);border:1px solid var(--ring);border-radius:18px;padding:22px">
-            <h2 id="logout-title" style="margin:0 0 8px;font-size:1.35rem">🚪 Sessão encerrada</h2>
-            <p class="subtitle" style="margin:0 0 12px;color:#94a3b8">
-                Você saiu do MotoTrack com segurança.
-            </p>
+    <div class="center mt-20">
+        <section class="card logout-card" aria-labelledby="logout-title">
+            <h2 id="logout-title" class="card-title">🚪 Sessão encerrada</h2>
+            <p class="subtitle muted">Você saiu do MotoTrack com segurança.</p>
 
-            <!-- Mensagem opcional vinda do param padrão do Spring Security -->
-            <div class="alert ok" th:if="${param.logout}"
-                 style="border-radius:12px;padding:12px 14px;margin:10px 0;border:1px solid rgba(34,197,94,.5);background:rgba(34,197,94,.08);color:#bbf7d0">
+            <!-- Mensagens -->
+            <div class="flash ok" th:if="${param.logout}">
                 Logout realizado com sucesso.
             </div>
 
-            <!-- Mensagem de erro caso alguém acesse sem contexto -->
-            <div class="alert err" th:if="${param.error}"
-                 style="border-radius:12px;padding:12px 14px;margin:10px 0;border:1px solid rgba(239,68,68,.5);background:rgba(239,68,68,.08);color:#fecaca">
+            <div class="flash danger" th:if="${param.error}">
                 Não foi possível encerrar a sessão.
             </div>
 
-            <div class="actions" style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap">
-                <a class="btn ghost" th:href="@{/}"
-                   style="display:inline-block;border:1px solid var(--ring);border-radius:12px;padding:10px 16px;font-weight:700;text-decoration:none;color:#e5e7eb;background:#0b1224">
-                    Ir para início
-                </a>
-                <a class="btn primary" th:href="@{/login}"
-                   style="display:inline-block;border:0;border-radius:12px;padding:10px 16px;font-weight:700;background:var(--primary);color:#0b1224">
-                    Entrar novamente
-                </a>
+            <div class="row gap-10 wrap mt-10 end">
+                <a class="btn ghost" th:href="@{/}">Ir para início</a>
+                <a class="btn primary" th:href="@{/login}">Entrar novamente</a>
             </div>
         </section>
     </div>
 
-    <!-- rodapé padrão -->
-    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <!-- rodapé -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
 </div>
 </body>
 </html>

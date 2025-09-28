@@ -1,43 +1,42 @@
+<!-- File: templates/error/403.html -->
 <!DOCTYPE html>
 <html lang="pt-br"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
-<!-- head padrão do projeto -->
-<th:block th:replace="~{fragments/head :: head('MotoTrack • Acesso não permitido')}"></th:block>
+<head>
+    <!-- head global (já inclui mototrack.css) -->
+    <th:block th:replace="~{fragments/head :: head('MotoTrack • Acesso não permitido')}"></th:block>
+    <!-- opcional: CSS explícito -->
+    <th:block th:replace="~{fragments/css :: mototrack}"></th:block>
+</head>
 
 <body>
+
 <div class="wrap">
-    <!-- navbar padrão (mostra login/logout) -->
-    <th:block th:replace="~{fragments/navbar :: navbar}"></th:block>
+    <!-- Navbar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-    <!-- conteúdo -->
-    <main style="display:grid;place-items:center;min-height:60dvh">
-        <section class="card" style="padding:24px;background:#111827;border:1px solid #263141;border-radius:16px;box-shadow:0 10px 30px #0006;text-align:center;max-width:520px">
-            <div class="icon" aria-hidden="true" style="font-size:64px;line-height:1;display:block;margin:0 auto 12px">🔒</div>
-            <h2 style="margin:0 0 6px">Sem permissão</h2>
+    <!-- Conteúdo -->
+    <main class="mt-20 center" aria-label="Acesso não permitido">
+        <section class="card" role="region" aria-labelledby="denied-title">
+            <div class="hero-emoji" aria-hidden="true">🔒</div>
+            <h2 id="denied-title">Sem permissão</h2>
 
-            <!-- mensagem genérica + detalhes opcionais -->
-            <p style="color:#94a3b8;margin:6px 0 0">Você não pode acessar esta ação.</p>
-            <p style="color:#94a3b8;margin:6px 0 0" th:if="${message}" th:text="${message}"></p>
-            <p style="color:#94a3b8;margin:6px 0 0" th:if="${status}">Código: <span th:text="${status}">403</span></p>
-            <p style="color:#94a3b8;margin:6px 0 0" th:if="${path}">Rota: <code th:text="${path}">/</code></p>
+            <p class="muted">Você não pode acessar esta ação.</p>
+            <p class="muted" th:if="${message}" th:text="${message}"></p>
+            <p class="muted" th:if="${status}">Código: <span th:text="${status}">403</span></p>
+            <p class="muted" th:if="${path}">Rota: <code th:text="${path}">/</code></p>
 
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap">
-                <a class="btn" href="javascript:history.back()"
-                   style="padding:10px 14px;border-radius:10px;border:1px solid #263141;color:#e5e7eb;text-decoration:none;background:#0b1224">
-                    Voltar
-                </a>
-
-                <a class="btn" th:href="@{/login}" sec:authorize="!isAuthenticated()"
-                   style="padding:10px 14px;border-radius:10px;border:1px solid #263141;color:#e5e7eb;text-decoration:none">
-                    Entrar
-                </a>
+            <div class="row justify-center mt-14">
+                <a class="btn ghost" href="javascript:history.back()">Voltar</a>
+                <a class="btn primary" th:href="@{/login}" sec:authorize="!isAuthenticated()">Entrar</a>
             </div>
         </section>
     </main>
 
-    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
 </div>
 </body>
 </html>

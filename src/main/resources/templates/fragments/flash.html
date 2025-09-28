@@ -9,9 +9,8 @@
          th:text="${msgSucesso}"
          role="status" aria-live="polite"></div>
 
-    <!-- Info (opcional) -->
-    <div class="flash"
-         style="background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.5);color:#bae6fd"
+    <!-- Info -->
+    <div class="flash info"
          th:if="${msgInfo}"
          th:text="${msgInfo}"
          role="status" aria-live="polite"></div>
@@ -22,43 +21,39 @@
          th:text="${msgErro}"
          role="alert" aria-live="assertive"></div>
 
-    <!-- Erros de validação (lista opcional) -->
+    <!-- Erros de validação (lista) -->
     <div class="flash error"
          th:if="${not #lists.isEmpty(fieldErrors)}"
          role="alert" aria-live="assertive">
         <strong th:text="${msgErro != null ? msgErro : 'Erro de validação'}"></strong>
-        <ul style="margin:6px 0 0 18px">
+        <ul class="list-errors">
             <li th:each="e : ${fieldErrors}" th:text="${e}"></li>
         </ul>
     </div>
 
-    <!-- Auto-dismiss (escopo só deste fragmento) -->
+    <!-- Auto-dismiss + botão fechar -->
     <script th:inline="javascript">
         (function () {
             var container = document.currentScript && document.currentScript.parentElement;
             if (!container) return;
 
-            // botão fechar (progressive enhancement)
             container.querySelectorAll('.flash').forEach(function (el) {
                 var btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'btn ghost';
-                btn.style.cssText = 'float:right;padding:4px 8px;margin:-4px -4px 0 8px;font-size:.85rem';
+                btn.className = 'flash-close';
                 btn.setAttribute('aria-label','Fechar alerta');
                 btn.textContent = '×';
                 btn.addEventListener('click', function () { el.remove(); });
                 el.prepend(btn);
             });
 
-            // remove automaticamente após 4s (mantém acessibilidade)
             setTimeout(function () {
                 container.querySelectorAll('.flash').forEach(function (el) { el.remove(); });
             }, 4000);
         })();
     </script>
-    <noscript>
-        <!-- Sem JS, banners permanecem visíveis até o próximo request -->
-    </noscript>
+    <noscript><!-- Sem JS, banners permanecem visíveis até o próximo request --></noscript>
 </div>
+
 </body>
 </html>
